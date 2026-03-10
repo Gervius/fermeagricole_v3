@@ -1,0 +1,246 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
+use Laravel\Fortify\Features;
+use App\Http\Controllers\FlockController;
+use App\Http\Controllers\BuildingController;
+use App\Http\Controllers\DailyRecordController;
+use App\Http\Controllers\IngredientController;
+use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\StockMouvementController;
+use App\Http\Controllers\TreatmentController;
+use App\Http\Controllers\UnitController;
+use App\Http\Controllers\FlockSaleController;
+use App\Http\Controllers\AccountController;
+use App\Http\Controllers\JournalVoucherController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\EggSaleController;
+use App\Http\Controllers\RecipeController;
+
+
+Route::get('/', function () {
+    return Inertia::render('welcome', [
+        'canRegister' => Features::enabled(Features::registration()),
+    ]);
+})->name('home');
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('dashboard', function () {
+        return Inertia::render('dashboard');
+    })->name('dashboard');
+
+    //Route::get('/Lots', [LotController::class, 'index'])->name('generation');
+    //Route::post('/Lots', [LotController::class, 'store'])->name('generationPost');
+
+    //Route::resource('/buildings', [BuildingController::class, 'index'])->name('building');
+
+    // Lots (flocks)
+    
+
+    Route::patch('/flocks/{flock}/submit', [FlockController::class, 'submit'])->name('flocksSubmit');
+    Route::patch('/flocks/{flock}/approve', [FlockController::class, 'approve'])->name('flocksApprove');
+    Route::patch('/flocks/{flock}/reject', [FlockController::class, 'reject'])->name('flocksReject');
+    Route::post('/flocks/{flock}/end', [FlockController::class, 'end'])->name('flocksEnd');
+
+    // 2. Ressources standards (index, create, store, show, edit, update, destroy)
+    Route::resource('flocks', FlockController::class)->names([
+        'index'   => 'generation',
+        'create'  => 'flocksCreate',
+        'store'   => 'flocksStore',
+        'show'    => 'flocksShow',
+        'edit'    => 'flocksEdit',
+        'update'  => 'flocksUpdate',
+        'destroy' => 'flocksDestroy',
+    ])
+    ->parameters([
+        'flocks' => 'flock' // Garde 'flock' pour l'injection de dépendance dans le controller
+    ]);
+
+    Route::resource('unit', UnitController::class)->names([
+        'index'   => 'unitsIndex',
+        'create'  => 'unitsCreate',
+        'store'   => 'unitsStore',
+        'edit'    => 'unitsEdit',
+        'update'  => 'unitsUpdate',
+        'destroy' => 'unitsDestroy',
+    ])
+    ->parameters([
+        'units' => 'unit' // Garde 'unit' pour l'injection de dépendance dans le controller
+    ]);
+
+    Route::resource('ingredients', IngredientController::class)->names([
+        'index'   => 'ingredientsIndex',
+        'create'  => 'ingredientsCreate',
+        'store'   => 'ingredientsStore',
+        'edit'    => 'ingredientsEdit',
+        'update'  => 'ingredientsUpdate',
+        'destroy' => 'ingredientsDestroy',
+    ])
+    ->parameters([
+        'ingredients' => 'ingredient' // Garde 'ingredient' pour l'injection de dépendance dans le controller
+    ]);
+
+    Route::resource('recipes', RecipeController::class)->names([
+        'index'   => 'recipesIndex',
+        'create'  => 'recipesCreate',
+        'store'   => 'recipesStore',
+        'show'   => 'recipesShow',
+        'edit'    => 'recipesEdit',
+        'update'  => 'recipesUpdate',
+        'destroy' => 'recipesDestroy',])->parameters(['recipes'=> 'recipe']);
+
+    Route::post('/stock-movements/{stockMovement}/approve', [StockMouvementController::class, 'approve'])->name('stockMovementsApprove');
+    Route::post('/stock-movements/{stockMovement}/reject', [StockMouvementController::class, 'reject'])->name('stockMovementsReject');
+    Route::patch('/stock-movements/{stockMovement}/edit', [StockMouvementController::class, 'edit'])->name('stockMovementsEdit');
+    Route::patch('/stock-movements/{stockMovement}/update', [StockMouvementController::class, 'update'])->name('stockMovementsUpdate');
+    Route::resource('stock-movements', StockMouvementController::class)->names([
+        'index'   => 'stockMovementsIndex',
+        'create'  => 'stockMovementsCreate',
+        'store'   => 'stockMovementsStore',
+        'show'    => 'stockMovementsShow',
+        'destroy' => 'stockMovementsDestroy',
+    ])
+    ->parameters([
+        'stock-movements' => 'stockMovement'
+    ]);
+
+    Route::post('/feed-productions/{feedProduction}/submit', [FeedProductionController::class, 'submit'])->name('feedProductionsSubmit');
+    Route::post('/feed-productions/{feedProduction}/approve', [FeedProductionController::class, 'approve'])->name('feedProductionsApprove');
+    Route::post('/feed-productions/{feedProduction}/reject', [FeedProductionController::class, 'reject'])->name('feedProductionsReject');
+
+    Route::resource('feed-productions', FeedProductionController::class)->names([
+        'index'   => 'feedProductionsIndex',
+        'create'  => 'feedProductionsCreate',
+        'store'   => 'feedProductionsStore',
+        'show'    => 'feedProductionsShow',
+        'edit'    => 'feedProductionsEdit',
+        'update'  => 'feedProductionsUpdate',
+        'destroy' => 'feedProductionsDestroy',
+    ])->parameters([
+        'feed-productions' => 'feedProduction'
+    ]);
+
+    // Optionnel : route pour calculer les ingrédients
+    Route::get('/recipes/{recipe}/calculate', [RecipeController::class, 'calculate'])->name('recipes.calculate');
+
+    Route::post('/treatments/{treatment}/complete', [TreatmentController::class, 'complete'])->name('treatmentsComplete');
+    Route::post('/treatments/{treatment}/approve', [TreatmentController::class, 'approve'])->name('treatmentsApprove');
+    Route::post('/treatments/{treatment}/reject', [TreatmentController::class, 'reject'])->name('treatmentsReject');
+    
+    Route::resource('treatments', TreatmentController::class)->names([
+        'index'   => 'treatmentsIndex',
+        'create'  => 'treatmentsCreate',
+        'store'   => 'treatmentsStore',
+        'show'    => 'treatmentsShow',
+        'edit'    => 'treatmentsEdit',
+        'update'  => 'treatmentsUpdate',
+        'destroy' => 'treatmentsDestroy',
+    ])
+    ->parameters([
+        'treatments' => 'treatment'
+    ]);
+
+    Route::post('/flock-sales/{flockSale}/approve', [FlockSaleController::class, 'approve'])->name('flockSalesApprove');
+    Route::post('/flock-sales/{flockSale}/reject', [FlockSaleController::class, 'reject'])->name('flockSalesReject');
+    
+    Route::resource('flock-sales', FlockSaleController::class)->names([
+        'index'   => 'flockSales',
+        'create'  => 'flockSaleCreate',
+        'store'   => 'flockSalesStore',
+        'show'    => 'flockSalesShow',
+        'edit'    => 'flockSalesEdit',
+        'update'  => 'flockSalesUpdate',
+        'destroy' => 'flockSalesDestroy',
+    ])
+    ->parameters([
+        'flock-sales' => 'flockSale'
+    ]);
+
+    Route::post('/egg-sales/{eggSale}/approve', [EggSaleController::class, 'approve'])->name('eggSalesApprove');
+    Route::post('/egg-sales/{eggSale}/reject', [EggSaleController::class, 'reject'])->name('eggSalesReject');
+    Route::post('/egg-sales/{eggSale}/cancel', [EggSaleController::class, 'cancel'])->name('eggSalesCancel');
+    Route::resource('egg-sales', EggSaleController::class)->names([
+        'index'   => 'eggSalesIndex',
+        'create'  => 'eggSalesCreate',
+        'store'   => 'eggSalesStore',
+        'show'    => 'eggSalesShow',
+        'edit'    => 'eggSalesEdit',
+        'update'  => 'eggSalesUpdate',
+        'destroy' => 'eggSalesDestroy',
+    ])
+    ->parameters([
+        'egg-sales' => 'eggSale'
+    ]);
+
+    Route::resource('users', UserController::class)->names([
+        'index'   => 'usersIndex',
+        'create'  => 'usersCreate',
+        'store'   => 'usersStore',
+        'show'    => 'usersShow',
+        'edit'    => 'usersEdit',
+        'update'  => 'usersUpdate',
+        'destroy' => 'usersDestroy',
+    ])->parameters(['users' => 'user']);
+
+    // Gestion des rôles
+    Route::resource('roles', RoleController::class)->names([
+        'index'   => 'rolesIndex',
+        'create'  => 'rolesCreate',
+        'store'   => 'rolesStore',
+        'show'    => 'rolesShow',
+        'edit'    => 'rolesEdit',
+        'update'  => 'rolesUpdate',
+        'destroy' => 'rolesDestroy',
+    ])->parameters(['roles' => 'role']);
+
+    // Gestion des permissions (lecture seule)
+    Route::resource('permissions', PermissionController::class)->only(['index', 'show'])->names([
+        'index' => 'permissionsIndex',
+        'show'  => 'permissionShow',
+    ])->parameters(['permissions' => 'permission']);
+
+    Route::get('/flocks/{flock}/daily-records', [DailyRecordController::class, 'index'])->name('suivieJournalier');
+    Route::post('/daily-records', [DailyRecordController::class, 'store'])->name('suivieStore');
+    Route::post('/daily-records/{dailyRecord}/approve', [DailyRecordController::class, 'approve'])->name('suivieApprove');
+    Route::post('/daily-records/{dailyRecord}/reject', [DailyRecordController::class, 'reject'])->name('suivieReject');
+
+    Route::get('/flocks/{flock}/daily-records-modal', [DailyRecordController::class, 'indexForModal'])
+    ->name('flocksDailyRecords');
+
+    // Debug route (authenticated) to inspect session CSRF token during development
+    Route::get('/_debug/csrf-token', function () {
+        return response()->json(['token' => session()->token()]);
+    })->name('debug.csrf');
+
+    Route::get('inventaire', function () {
+        return Inertia::render('inventaire');
+    })->name('inventaire');
+
+    Route::get('comptabilite', function () {
+        return Inertia::render('comptabilite');
+    })->name('comptabilite');
+
+    Route::get('veterinaire', function () {
+        return Inertia::render('veterinaire');
+    })->name('veterinaire');
+
+    Route::get('parametrages', function () {
+        return Inertia::render('parametrages');
+    })->name('parametrages');
+
+    Route::get('vente', function () {
+        return Inertia::render('vente');
+    })->name('vente');
+
+
+    Route::resource('accounts', AccountController::class)->names(['index' => 'accountsIndex', 'show' => 'accountShow'])->parameters(['accounts' => 'account']);
+    Route::resource('journal-vouchers', JournalVoucherController::class)->only(['index', 'show'])->names([
+        'index'   => 'journalVouchers',
+        'show'  => 'journalVoucherShow',])->parameters(['journal-vouchers' => 'voucher']);
+    Route::get('/reports/balance', [ReportController::class, 'balance'])->name('reportBalance');
+});
+
+require __DIR__.'/settings.php';

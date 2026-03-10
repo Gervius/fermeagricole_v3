@@ -1,0 +1,129 @@
+import React, { useState } from 'react';
+import { Head, router } from '@inertiajs/react';
+import AppLayout from '@/layouts/app-layout';
+import { reportsBalance } from '@/routes';
+
+
+interface BalanceLine {
+    code: string;
+    name: string;
+    debit: number;
+    credit: number;
+    balance: number;
+}
+
+interface BalanceReport {
+    accounts: BalanceLine[];
+    total_debit: number;
+    total_credit: number;
+}
+
+interface BalancePageProps {
+    report: BalanceReport;
+    filters: { start_date?: string; end_date?: string };
+}
+
+export default function BalanceReport({ report, filters }: BalancePageProps) {
+    const [startDate, setStartDate] = useState(filters.start_date || '');
+    const [endDate, setEndDate] = useState(filters.end_date || '');
+
+    const applyFilters = () => {
+        router.get(reportsBalance.url(), {
+            start_date: startDate || undefined,
+            end_date: endDate || undefined,
+        }, { preserveState: true, replace: true });
+    };
+
+    const resetFilters = () => {
+        setStartDate('');
+        setEndDate('');
+        router.get(reportsBalance.url(), {}, { replace: true });
+    };
+
+    return (
+        <AppLayout breadcrumbs={[{ title: 'Balance générale', href: reportsBalance.url() }]}>
+            <Head title="Balance générale" />
+            <div className="max-w-6xl mx-auto py-8 px-4">
+                <div className="bg-white border border-stone-200 rounded-xl p-6">
+                    <h1 className="text-xl font-semibold text-stone-900 mb-6">Balance générale</h1>
+
+                    {/* Filtres */}
+                    <div className="flex flex-wrap gap-3 items-end mb-6">
+                        <div className="min-w-[180px]">
+                            <label className="block text-xs text-stone-500 mb-1.5 font-medium">Date début</label>
+                            <input
+                                type="date"
+                                value={startDate}
+                                onChange={e => setStartDate(e.target.value)}
+                                className="w-full px-3 py-2 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                            />
+                        </div>
+                        <div className="min-w-[180px]">
+                            <label className="block text-xs text-stone-500 mb-1.5 font-medium">Date fin</label>
+                            <input
+                                type="date"
+                                value={endDate}
+                                onChange={e => setEndDate(e.target.value)}
+                                className="w-full px-3 py-2 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                            />
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={applyFilters}
+                                className="px-4 py-2 bg-stone-900 text-white text-sm rounded-lg hover:bg-stone-800 transition-colors"
+                            >
+                                Générer
+                            </button>
+                            <button
+                                onClick={resetFilters}
+                                className="px-4 py-2 border border-stone-200 text-stone-600 text-sm rounded-lg hover:bg-stone-50 transition-colors"
+                            >
+                                Réinitialiser
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Tableau de balance */}
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm border border-stone-200">
+                            <thead className="bg-stone-50">
+                                <tr>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-stone-600">Compte</th>
+                                    <th className="px-4 py-2 text-left text-xs font-medium text-stone-600">Intitulé</th>
+                                    <th className="px-4 py-2 text-right text-xs font-medium text-stone-600">Débit</th>
+                                    <th className="px-4 py-2 text-right text-xs font-medium text-stone-600">Crédit</th>
+                                    <th className="px-4 py-2 text-right text-xs font-medium text-stone-600">Solde</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-stone-200">
+                                {report.accounts.map((line, idx) => (
+                                    <tr key={idx} className="hover:bg-stone-50">
+                                        <td className="px-4 py-2 font-mono">{line.code}</td>
+                                        <td className="px-4 py-2">{line.name}</td>
+                                        <td className="px-4 py-2 text-right">{line.debit.toLocaleString('fr-FR')} €</td>
+                                        <td className="px-4 py-2 text-right">{line.credit.toLocaleString('fr-FR')} €</td>
+                                        <td className={`px-4 py-2 text-right font-medium ${line.balance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                                            {line.balance.toLocaleString('fr-FR')} €
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                            <tfoot className="bg-stone-50 font-medium">
+                                <tr>
+                                    <td colSpan={2} className="px-4 py-2 text-right">Totaux :</td>
+                                    <td className="px-4 py-2 text-right">{report.total_debit.toLocaleString('fr-FR')} €</td>
+                                    <td className="px-4 py-2 text-right">{report.total_credit.toLocaleString('fr-FR')} €</td>
+                                    <td className="px-4 py-2 text-right">—</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    {report.accounts.length === 0 && (
+                        <p className="text-center text-stone-400 py-8">Aucune écriture pour la période sélectionnée.</p>
+                    )}
+                </div>
+            </div>
+        </AppLayout>
+    );
+}
