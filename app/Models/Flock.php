@@ -56,6 +56,29 @@ class Flock extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function applySale(FlockSale $sale): void
+    {
+        if ($sale->status !== 'approved') {
+            throw new \Exception('Seules les ventes approuvées peuvent être appliquées.');
+        }
+
+        $newQuantity = $this->current_quantity - $sale->quantity;
+        if ($newQuantity < 0) {
+            throw new \Exception('La quantité vendue dépasse l\'effectif actuel.');
+        }
+
+        $this->current_quantity = $newQuantity;
+
+        // Si l'effectif devient nul, terminer le lot
+        if ($this->current_quantity == 0) {
+            $this->status = 'completed';
+            $this->ended_at = now();
+            $this->end_reason = 'sale';
+        }
+
+        $this->save();
+    }
+
     
 
     // Vérifier si une vente est possible
