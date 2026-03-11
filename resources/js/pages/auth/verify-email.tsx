@@ -10,15 +10,15 @@ import { Form, Head } from '@inertiajs/react';
 export default function VerifyEmail({ status }: { status?: string }) {
     return (
         <AuthLayout
-            title="Verify email"
-            description="Please verify your email address by clicking on the link we just emailed to you."
+            title="Vérifier l'adresse e-mail"
+            description="Veuillez vérifier votre adresse e-mail en cliquant sur le lien que nous venons de vous envoyer."
         >
-            <Head title="Email verification" />
+            <Head title="Vérification de l'e-mail" />
 
             {status === 'verification-link-sent' && (
                 <div className="mb-4 text-center text-sm font-medium text-green-600">
-                    A new verification link has been sent to the email address
-                    you provided during registration.
+                    Un nouveau lien de vérification a été envoyé à l'adresse e-mail
+                    que vous avez fournie lors de l'inscription.
                 </div>
             )}
 
@@ -27,14 +27,14 @@ export default function VerifyEmail({ status }: { status?: string }) {
                     <>
                         <Button disabled={processing} variant="secondary">
                             {processing && <Spinner />}
-                            Resend verification email
+                            Renvoyer l'e-mail de vérification
                         </Button>
 
                         <TextLink
                             href={logout()}
-                            className="mx-auto block text-sm"
+                            className="mx-auto block text-sm text-red-600"
                         >
-                            Log out
+                            Se déconnecter
                         </TextLink>
                     </>
                 )}

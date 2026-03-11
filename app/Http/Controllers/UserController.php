@@ -35,7 +35,7 @@ class UserController extends Controller
                 'created_at' => $user->created_at->format('d/m/Y'),
             ]);
 
-        return Inertia::render('Users/Index', [
+        return Inertia::render('Settings/Users/Index', [
             'users' => $users,
             'filters' => $request->only(['search', 'per_page']),
         ]);
@@ -48,7 +48,7 @@ class UserController extends Controller
             'label' => $role->name,
         ]);
 
-        return Inertia::render('Users/Create', [
+        return Inertia::render('Settings/Users/Create', [
             'roles' => $roles,
         ]);
     }
@@ -61,7 +61,7 @@ class UserController extends Controller
             $user->syncRoles($request->roles);
         }
 
-        return redirect()->route('users.index')
+        return redirect()->route('usersIndex')
             ->with('success', 'Utilisateur créé avec succès.');
     }
 
@@ -74,7 +74,7 @@ class UserController extends Controller
 
         $user->load('roles');
 
-        return Inertia::render('Users/Edit', [
+        return Inertia::render('Settings/Users/Edit', [
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
@@ -93,7 +93,7 @@ class UserController extends Controller
             $user->syncRoles($request->roles);
         }
 
-        return redirect()->route('users.index')
+        return redirect()->route('usersIndex')
             ->with('success', 'Utilisateur mis à jour.');
     }
 
@@ -101,7 +101,7 @@ class UserController extends Controller
     {
         $user->delete();
 
-        return redirect()->route('users.index')
+        return redirect()->route('usersIndex')
             ->with('success', 'Utilisateur supprimé.');
     }
 }

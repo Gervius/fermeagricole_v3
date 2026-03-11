@@ -4,11 +4,14 @@ import { Head } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { useToasts } from '@/components/ToastProvider';
 import {
-
-Eye, Edit2, Send, AlertCircle, ClipboardList, CheckCircle, XCircle,
-MapPin, Calendar, Plus, ChevronLeft, ChevronRight, Trash2
+  Eye, Edit2, Send, AlertCircle, ClipboardList, CheckCircle, XCircle,
+  MapPin, Calendar, Plus, ChevronLeft, ChevronRight, Trash2, MessageCircle
 } from 'lucide-react';
 import { flocksApprove, flocksDestroy, flocksReject, flocksSubmit } from '@/routes';
+import {
+  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, ComposedChart
+} from 'recharts';
+import FlockProfitability from '@/components/Flocks/FlockProfitability';
 
 // ─────────────────────────────────────────────
 // Types
@@ -33,10 +36,16 @@ arrival_date: string;
 initial_quantity: number;
 current_quantity: number;
 status: FlockStatus;
+standard_mortality_rate?: number;
 notes?: string;
 creator: string;
 approver?: string;
 approved_at?: string;
+stats: {
+  mortality_rate: number;
+  total_eggs: number;
+  egg_efficiency: number;
+};
 }
 
 interface DailyRecord {
@@ -57,6 +66,7 @@ can_reject: boolean;
 interface PageProps {
 flock: Flock;
 dailyRecords: DailyRecord[];
+financial_analysis: any; // On passe la prop du service backend
 flash?: { success?: string; error?: string };
 [key: string]: any;
 }
@@ -84,9 +94,10 @@ rejected: { label: 'Rejeté',     classes: 'bg-red-100 text-red-600' },
 // ─────────────────────────────────────────────
 
 export default function FlockShow() {
-const { flock, dailyRecords, flash } = usePage<PageProps>().props;
+const { flock, dailyRecords, financial_analysis, flash } = usePage<PageProps>().props;
 
 const [showDeleteModal, setShowDeleteModal] = useState(false);
+const [activeTab, setActiveTab] = useState<'overview' | 'profitability'>('overview');
 const [showApproveModal, setShowApproveModal] = useState(false);
 const [rejectionReason, setRejectionReason] = useState('');
   const { addToast } = useToasts();
@@ -123,10 +134,25 @@ const handleReject = () => {
   });
 };
 
+// ── Handlers ────────────────────────────────
+
+const handleWhatsAppShare = () => {
+  const text = `🐔 *Rapport du Lot ${flock.name}*\n\n` +
+    `📍 *Bâtiment*: ${flock.building}\n` +
+    `👥 *Effectif Actuel*: ${flock.current_quantity.toLocaleString('fr-FR')} (Initial: ${flock.initial_quantity.toLocaleString('fr-FR')})\n` +
+    `🥚 *Efficacité de ponte*: ${flock.stats.egg_efficiency}%\n` +
+    `💀 *Taux de mortalité*: ${flock.stats.mortality_rate}% ` +
+    (flock.standard_mortality_rate && flock.stats.mortality_rate > flock.standard_mortality_rate ? '⚠️ (Élevé)' : '✅ (Normal)') +
+    `\n\n_Généré depuis l'application de gestion_`;
+  
+  const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+  window.open(url, '_blank');
+};
+
 // ── Statistics ──────────────────────────────
 
 const approvedRecords = dailyRecords.filter(r => r.status === 'approved');
-const stats = {
+const recordsStats = {
   totalLosses: approvedRecords.reduce((s, r) => s + r.losses, 0),
   avgEggs: approvedRecords.length
     ? Math.round(approvedRecords.reduce((s, r) => s + r.eggs, 0) / approvedRecords.length)
@@ -134,7 +160,16 @@ const stats = {
   count: approvedRecords.length,
 };
 
+// Preparer les données pour le graphique (triées par date chronologique)
+const chartData = [...approvedRecords].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map(r => ({
+  date: new Date(r.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }),
+  Oeufs: r.eggs,
+  Pertes: r.losses
+}));
+
 const sm = STATUS_META[flock.status];
+
+const mortalityIsHigh = flock.standard_mortality_rate && flock.stats.mortality_rate > flock.standard_mortality_rate;
 
 // ─────────────────────────────────────────────
 
@@ -202,120 +237,199 @@ return (
                 <Trash2 className="w-4 h-4" /> Supprimer
               </button>
             )}
+            
+            {flock.status === 'active' && (
+              <button
+                onClick={handleWhatsAppShare}
+                className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm rounded-lg transition-colors ml-auto"
+              >
+                <MessageCircle className="w-4 h-4" /> Partager (WhatsApp)
+              </button>
+            )}
           </div>
+        </div>
+      </div>
+
+      {/* ── Tabs Navigation ── */}
+      <div className="max-w-4xl mx-auto px-8 pt-4">
+        <div className="flex border-b border-stone-200 gap-6">
+          <button
+            onClick={() => setActiveTab('overview')}
+            className={`pb-3 text-sm font-medium transition-colors relative ${activeTab === 'overview' ? 'text-indigo-600' : 'text-stone-500 hover:text-stone-700'}`}
+          >
+            Vue d'ensemble
+            {activeTab === 'overview' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600 rounded-t-full" />}
+          </button>
+          <button
+            onClick={() => setActiveTab('profitability')}
+            className={`pb-3 text-sm font-medium transition-colors relative ${activeTab === 'profitability' ? 'text-indigo-600' : 'text-stone-500 hover:text-stone-700'}`}
+          >
+            Analyse Financière
+            {activeTab === 'profitability' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600 rounded-t-full" />}
+          </button>
         </div>
       </div>
 
       {/* ── Content ── */}
       <div className="max-w-4xl mx-auto px-8 py-8 space-y-6">
 
-        {/* ── Info cards ── */}
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <InfoCard
-            label="Bâtiment"
-            value={flock.building}
-            icon={<MapPin className="w-4 h-4" />}
-          />
-          <InfoCard
-            label="Date d'arrivée"
-            value={flock.arrival_date}
-            icon={<Calendar className="w-4 h-4" />}
-          />
-          <InfoCard
-            label="Effectif initial"
-            value={flock.initial_quantity.toLocaleString('fr-FR')}
-          />
-          <InfoCard
-            label="Effectif actuel"
-            value={flock.current_quantity.toLocaleString('fr-FR')}
-          />
+        {activeTab === 'overview' && (
+          <>
+            {/* ── KPIs (Cockpit) ── */}
+        {flock.status === 'active' && (
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4 mb-8">
+            <StatCard 
+              label="Efficacité de Ponte" 
+              value={`${flock.stats.egg_efficiency}%`} 
+              textColor={flock.stats.egg_efficiency >= 85 ? 'text-emerald-600' : (flock.stats.egg_efficiency >= 70 ? 'text-amber-500' : 'text-stone-900')}
+            />
+            <StatCard 
+              label="Taux de Mortalité" 
+              value={`${flock.stats.mortality_rate}%`} 
+              subtitle={flock.standard_mortality_rate ? `Std: ${flock.standard_mortality_rate}%` : undefined}
+              textColor={mortalityIsHigh ? 'text-red-600' : 'text-emerald-600'}
+            />
+            <StatCard 
+              label="Effectif Actuel" 
+              value={flock.current_quantity.toLocaleString('fr-FR')} 
+              subtitle={`Initial: ${flock.initial_quantity.toLocaleString('fr-FR')}`}
+            />
+            <StatCard 
+              label="Moy. Œufs/Jour" 
+              value={recordsStats.avgEggs.toLocaleString('fr-FR')} 
+            />
+          </div>
+        )}
+
+        {/* ── Visualisation Graphique ── */}
+        {flock.status === 'active' && chartData.length > 0 && (
+          <div className="bg-white border border-stone-200 rounded-xl p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-stone-900 mb-6">Tendance (Ponte et Pertes)</h2>
+            <div className="h-72 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                  <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} dy={10} />
+                  <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} />
+                  <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} />
+                  <RechartsTooltip 
+                    contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                  />
+                  <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                  <Bar yAxisId="right" dataKey="Pertes" fill="#ef4444" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                  <Line yAxisId="left" type="monotone" dataKey="Oeufs" stroke="#6366f1" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* ── Info cards ── */}
+          <div className="grid grid-cols-2 gap-4">
+            <InfoCard
+              label="Bâtiment"
+              value={flock.building}
+              icon={<MapPin className="w-4 h-4" />}
+            />
+            <InfoCard
+              label="Date d'arrivée"
+              value={flock.arrival_date}
+              icon={<Calendar className="w-4 h-4" />}
+            />
+            <InfoCard
+              label="Standard Mortalité"
+              value={flock.standard_mortality_rate ? `${flock.standard_mortality_rate}%` : '—'}
+            />
+            <InfoCard
+              label="Total Pertes"
+              value={recordsStats.totalLosses.toLocaleString('fr-FR')}
+            />
+          </div>
+
+          {/* ── Details ── */}
+          <div className="bg-white border border-stone-200 rounded-xl p-6">
+            <h2 className="text-lg font-semibold text-stone-900 mb-4">Informations</h2>
+            <div className="space-y-3 text-sm">
+              <InfoRow label="Créé par" value={flock.creator} />
+              {flock.approver && (
+                <>
+                  <InfoRow label="Approuvé par" value={flock.approver} />
+                  <InfoRow label="Date d'approbation" value={flock.approved_at || '—'} />
+                </>
+              )}
+              {flock.notes && (
+                <div className="mt-4 pt-4 border-t border-stone-100">
+                  <span className="text-stone-500 font-medium">Notes :</span>
+                  <p className="text-stone-900 mt-1 whitespace-pre-wrap">{flock.notes}</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* ── Details ── */}
-        <div className="bg-white border border-stone-200 rounded-xl p-6">
-          <h2 className="text-lg font-semibold text-stone-900 mb-4">Informations</h2>
-          <div className="space-y-3 text-sm">
-            <InfoRow label="Créé par" value={flock.creator} />
-            {flock.approver && (
-              <>
-                <InfoRow label="Approuvé par" value={flock.approver} />
-                <InfoRow label="Date d'approbation" value={flock.approved_at || '—'} />
-              </>
-            )}
-            {flock.notes && (
-              <div>
-                <span className="text-stone-500">Notes :</span>
-                <p className="text-stone-900 mt-1 whitespace-pre-wrap">{flock.notes}</p>
+            {/* ── Daily records table ── */}
+            {dailyRecords.length > 0 && (
+              <div className="bg-white border border-stone-200 rounded-xl overflow-hidden">
+                <div className="px-6 py-4 border-b border-stone-100">
+                  <h2 className="text-lg font-semibold text-stone-900">Suivi journalier</h2>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-stone-100 bg-stone-50">
+                        {['Date', 'Pertes', 'Œufs', 'Notes', 'Statut', 'Approuvé par'].map(h => (
+                          <th key={h} className="px-6 py-3 text-left text-xs font-semibold text-stone-500 uppercase tracking-wide">
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-stone-100">
+                      {dailyRecords.map(record => {
+                        const rsm = RECORD_STATUS_META[record.status];
+                        return (
+                          <tr key={record.id} className="hover:bg-stone-50">
+                            <td className="px-6 py-4 text-stone-700">
+                              {new Date(record.date).toLocaleDateString('fr-FR')}
+                            </td>
+                            <td className="px-6 py-4 text-stone-700">{record.losses}</td>
+                            <td className="px-6 py-4 text-stone-700">{record.eggs.toLocaleString('fr-FR')}</td>
+                            <td className="px-6 py-4 text-stone-500 text-xs max-w-xs">
+                              {record.notes || '—'}
+                              {record.rejection_reason && (
+                                <div className="mt-1 text-red-600 font-medium">
+                                  Motif : {record.rejection_reason}
+                                </div>
+                              )}
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${rsm.classes}`}>
+                                {rsm.label}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-stone-600">
+                              {record.approved_by || '—'}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
-          </div>
-        </div>
 
-        {/* ── Daily records stats ── */}
-        {flock.status === 'active' && (
-          <div className="grid grid-cols-3 gap-4">
-            <StatCard label="Total pertes" value={stats.totalLosses} />
-            <StatCard label="Moy. œufs/jour" value={stats.avgEggs.toLocaleString('fr-FR')} />
-            <StatCard label="Saisies approuvées" value={stats.count} />
-          </div>
+            {dailyRecords.length === 0 && flock.status === 'active' && (
+              <div className="bg-stone-50 border border-stone-200 rounded-xl p-8 text-center">
+                <p className="text-stone-500">Aucun enregistrement journalier pour ce lot.</p>
+              </div>
+            )}
+          </>
         )}
 
-        {/* ── Daily records table ── */}
-        {dailyRecords.length > 0 && (
-          <div className="bg-white border border-stone-200 rounded-xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-stone-100">
-              <h2 className="text-lg font-semibold text-stone-900">Suivi journalier</h2>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-stone-100 bg-stone-50">
-                    {['Date', 'Pertes', 'Œufs', 'Notes', 'Statut', 'Approuvé par'].map(h => (
-                      <th key={h} className="px-6 py-3 text-left text-xs font-semibold text-stone-500 uppercase tracking-wide">
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-stone-100">
-                  {dailyRecords.map(record => {
-                    const rsm = RECORD_STATUS_META[record.status];
-                    return (
-                      <tr key={record.id} className="hover:bg-stone-50">
-                        <td className="px-6 py-4 text-stone-700">
-                          {new Date(record.date).toLocaleDateString('fr-FR')}
-                        </td>
-                        <td className="px-6 py-4 text-stone-700">{record.losses}</td>
-                        <td className="px-6 py-4 text-stone-700">{record.eggs.toLocaleString('fr-FR')}</td>
-                        <td className="px-6 py-4 text-stone-500 text-xs max-w-xs">
-                          {record.notes || '—'}
-                          {record.rejection_reason && (
-                            <div className="mt-1 text-red-600 font-medium">
-                              Motif : {record.rejection_reason}
-                            </div>
-                          )}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${rsm.classes}`}>
-                            {rsm.label}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-stone-600">
-                          {record.approved_by || '—'}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {dailyRecords.length === 0 && flock.status === 'active' && (
-          <div className="bg-stone-50 border border-stone-200 rounded-xl p-8 text-center">
-            <p className="text-stone-500">Aucun enregistrement journalier pour ce lot.</p>
-          </div>
+        {activeTab === 'profitability' && financial_analysis && (
+          <FlockProfitability data={financial_analysis} />
         )}
       </div>
 
@@ -431,11 +545,12 @@ return (
 );
 }
 
-function StatCard({ label, value }: { label: string; value: string | number }) {
+function StatCard({ label, value, subtitle, textColor = "text-stone-900" }: { label: string; value: string | number, subtitle?: string, textColor?: string }) {
 return (
-  <div className="bg-white border border-stone-200 rounded-xl p-4">
+  <div className="bg-white border border-stone-200 rounded-xl p-5 shadow-sm">
     <div className="text-xs text-stone-500 mb-1 font-medium">{label}</div>
-    <div className="text-2xl font-bold text-stone-900">{value}</div>
+    <div className={`text-3xl font-bold tracking-tight ${textColor}`}>{value}</div>
+    {subtitle && <div className="text-xs text-stone-400 mt-2">{subtitle}</div>}
   </div>
 );
 }

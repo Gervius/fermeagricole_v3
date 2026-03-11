@@ -1,4 +1,3 @@
-import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import {
@@ -10,82 +9,126 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { 
-    dashboard, 
+import {
+    accountingReview,
+    buildingsIndex,
+    dashboard,
     generation,
-    inventaire,
-    comptabilite,
-    veterinaire,
-    treatmentsIndex,
-    parametrages,
-    vente, 
-    eggSalesIndex,
-    ingredientsIndex,
+    invoicesIndex,
+    journalVouchersIndex,
     recipesIndex,
-    stockMovementsIndex
+    reportsBalance,
+    stockMovementsIndex,
+    treatmentsIndex,
+    feedProductionsIndex
 } from '@/routes';
-import { type NavItem } from '@/types';
+import { NavItem, type NavGroup } from '@/types';
 import { Link } from '@inertiajs/react';
-import { 
-    BookOpen, 
-    Folder, 
-    LayoutGrid, 
-    Egg, 
-    Stethoscope,  
-    Calculator, Package, 
-    ShoppingCart, 
-    Settings,
+import {
     Bird,
-    Wheat} from 'lucide-react';
+    BookOpen,
+    Calculator,
+    ClipboardList,
+    Coins,
+    Egg,
+    FileText,
+    Folder,
+    LayoutGrid,
+    Package,
+    Receipt,
+    Settings,
+    ShoppingCart,
+    Stethoscope,
+    UsersRound
+} from 'lucide-react';
+import { partnersIndex } from '@/routes';
 import AppLogo from './app-logo';
-import ingredients from '@/routes/ingredients';
 
-const mainNavItems: NavItem[] = [
+const navGroups: NavGroup[] = [
     {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
+        title: 'Général',
+        items: [
+            {
+                title: 'Tableau de bord',
+                href: dashboard(),
+                icon: LayoutGrid,
+            },
+        ],
     },
     {
-        title: 'Generation',
-        href: generation(),
-        icon: Bird,
+        title: 'Production',
+        items: [
+            {
+                title: 'Lots de poules',
+                href: generation(),
+                icon: Bird,
+            },
+            {
+                title: 'Soins vétérinaires',
+                href: treatmentsIndex(),
+                icon: Stethoscope,
+            },
+        ],
     },
     {
-        title: 'Ventes Oeufs',
-        href: eggSalesIndex(),
-        icon: Egg,
+        title: 'Alimentation',
+        items: [
+            {
+                title: 'Mouvements de stock',
+                href: stockMovementsIndex(),
+                icon: ShoppingCart,
+            },
+            {
+                title: "Recettes d'aliments",
+                href: recipesIndex(),
+                icon: BookOpen,
+            },
+            {
+                title: 'Productions',
+                href: feedProductionsIndex(), 
+                icon: Package,
+            },
+        ],
     },
     {
-        title: 'Matiere Premieres',
-        href: ingredientsIndex(),
-        icon: Wheat,
+        title: 'Finance & Compta',
+        items: [
+            {
+                title: 'Tiers & Partenaires',
+                href: partnersIndex(),
+                icon: UsersRound,
+            },
+            {
+                title: 'Facturation Unifiée',
+                href: invoicesIndex(),
+                icon: Receipt,
+            },
+            {
+                title: 'Révision Comptable',
+                href: accountingReview(),
+                icon: ClipboardList,
+            },
+            {
+                title: 'Journaux (Vouchers)',
+                href: journalVouchersIndex(),
+                icon: FileText,
+            },
+            {
+                title: 'Balance Générale',
+                href: reportsBalance(),
+                icon: Calculator,
+            },
+        ],
     },
     {
-        title: 'Recette Aliments',
-        href: recipesIndex(),
-        icon: Package,
-    },
-    
-    {
-        title: 'Comptabilité',
-        href: comptabilite(),
-        icon: Calculator,
-    },
-    {
-        title: 'Veterinaire',
-        href: treatmentsIndex(),
-        icon: Stethoscope,
-    },
-    {
-        title: 'Mvts Stock Aliments',
-        href: stockMovementsIndex(),
-        icon: ShoppingCart,
-    },
-    {
-        title: 'Parametrages',
-        href: parametrages(),
-        icon: Settings,
+        title: 'Administration',
+        items: [
+            {
+                title: 'Paramétrages (Hub)',
+                href: buildingsIndex(),
+                icon: Settings,
+            },
+        ],
     },
 ];
 
@@ -112,18 +155,16 @@ export function AppSidebar() {
                             <Link href={dashboard()} prefetch>
                                 <AppLogo />
                             </Link>
-                            
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                <NavMain groups={navGroups} />
             </SidebarContent>
 
             <SidebarFooter>
-                <NavFooter items={footerNavItems} className="mt-auto" />
                 <NavUser />
             </SidebarFooter>
         </Sidebar>

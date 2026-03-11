@@ -11,10 +11,6 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 class AccountController extends Controller
 {
     use AuthorizesRequests;   
-    public function __construct()
-    {
-        
-    }
 
     public function index()
     {
@@ -27,13 +23,61 @@ class AccountController extends Controller
                 'code' => $account->code,
                 'name' => $account->name,
                 'type' => $account->type,
+                'is_active' => $account->is_active,
                 'debit' => $debit,
                 'credit' => $credit,
                 'balance' => $balance,
             ];
         });
 
-        return Inertia::render('Accounts/Index', ['accounts' => $accounts]);
+        // Simuler une pagination pour respecter la structure Frontend
+        $paginatedAccounts = new \Illuminate\Pagination\LengthAwarePaginator(
+            $accounts,
+            $accounts->count(),
+            100, // per_page
+            1    // current_page
+        );
+
+        return Inertia::render('Settings/Accounts/Index', ['accounts' => $paginatedAccounts]);
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'code' => 'required|string|unique:accounts',
+            'name' => 'required|string|max:255',
+            'type' => 'required|in:asset,liability,equity,revenue,expense',
+            'is_active' => 'boolean',
+        ]);
+
+        Account::create($validated);
+
+        return redirect()->back()->with('success', 'Compte créé avec succès.');
+    }
+
+    public function update(Request $request, Account $account)
+    {
+        $validated = $request->validate([
+            'code' => 'required|string|unique:accounts,code,' . $account->id,
+            'name' => 'required|string|max:255',
+            'type' => 'required|in:asset,liability,equity,revenue,expense',
+            'is_active' => 'boolean',
+        ]);
+
+        $account->update($validated);
+
+        return redirect()->back()->with('success', 'Compte mis à jour.');
+    }
+
+    public function destroy(Account $account)
+    {
+        // La vérification de sécurité est gérée par le AccountObserver (interdit si transactions existantes)
+        try {
+            $account->delete();
+            return redirect()->back()->with('success', 'Compte supprimé.');
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['message' => $e->getMessage()]);
+        }
     }
 
     public function show(Account $account)
@@ -51,7 +95,7 @@ class AccountController extends Controller
                 'credit' => $entry->credit,
             ]);
 
-        return Inertia::render('Accounts/Show', [
+        return Inertia::render('Settings/Accounts/Show', [
             'account' => $account,
             'entries' => $entries,
         ]);

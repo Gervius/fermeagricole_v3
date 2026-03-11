@@ -13,13 +13,13 @@ class IngredientController extends Controller
     public function index()
     {
         $ingredients = Ingredient::with('defaultUnit')->paginate(15);
-        return Inertia::render('Ingredients/Index', ['ingredients' => $ingredients]);
+        return Inertia::render('Settings/Ingredients/Index', ['ingredients' => $ingredients]);
     }
 
     public function create()
     {
         $units = Unit::all();
-        return Inertia::render('Ingredients/Create', ['units' => $units]);
+        return Inertia::render('Settings/Ingredients/Create', ['units' => $units]);
     }
 
     public function store(Request $request)
@@ -37,13 +37,13 @@ class IngredientController extends Controller
 
         Ingredient::create($validated);
 
-        return redirect()->route('ingredients.index')->with('success', 'Ingrédient créé.');
+        return redirect()->route('ingredientsIndex')->with('success', 'Ingrédient créé.');
     }
 
     public function edit(Ingredient $ingredient)
     {
         $units = Unit::all();
-        return Inertia::render('Ingredients/Edit', [
+        return Inertia::render('Settings/Ingredients/Edit', [
             'ingredient' => $ingredient,
             'units' => $units,
         ]);
@@ -64,12 +64,12 @@ class IngredientController extends Controller
 
         $ingredient->update($validated);
 
-        return redirect()->route('ingredients.index')->with('success', 'Ingrédient mis à jour.');
+        return redirect()->route('ingredientsIndex')->with('success', 'Ingrédient mis à jour.');
     }
 
     public function destroy(Ingredient $ingredient)
     {
         $ingredient->delete();
-        return redirect()->route('ingredients.index')->with('success', 'Ingrédient supprimé.');
+        return redirect()->route('ingredientsIndex')->with('success', 'Ingrédient supprimé.');
     }
 }

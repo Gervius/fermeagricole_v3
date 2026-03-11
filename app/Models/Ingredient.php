@@ -6,7 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Observers\IngredientObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 
+#[ObservedBy([IngredientObserver::class])]
 class Ingredient extends Model
 {
     use SoftDeletes;
@@ -16,6 +19,7 @@ class Ingredient extends Model
         'reference',
         'default_unit_id',
         'current_stock',
+        'pmp',
         'min_stock',
         'max_stock',
         'description',
@@ -40,5 +44,15 @@ class Ingredient extends Model
     public function stockMovements(): HasMany
     {
         return $this->hasMany(StockMovement::class);
+    }
+
+    public function movements(): HasMany
+    {
+        return $this->hasMany(StockMouvement::class);
+    }
+
+    public function recipes()
+    {
+        return $this->belongsToMany(Recipe::class, 'recipe_ingredients');
     }
 }

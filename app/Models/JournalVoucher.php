@@ -12,6 +12,7 @@ class JournalVoucher extends Model
     protected $fillable = [
         'voucher_number',
         'date',
+        'status',
         'description',
         'source_id',
         'source_type',
@@ -41,10 +42,13 @@ class JournalVoucher extends Model
     {
         $year = date('Y');
         $month = date('m');
-        $last = self::whereYear('created_at', $year)
-                    ->whereMonth('created_at', $month)
-                    ->orderBy('id', 'desc')
+        
+        // On cherche le dernier numéro pour ce mois parmi ceux qui ONT un numéro (posted)
+        $last = self::whereNotNull('voucher_number')
+                    ->where('voucher_number', 'like', "VT-{$year}{$month}-%")
+                    ->orderBy('voucher_number', 'desc')
                     ->first();
+                    
         $nextNumber = $last ? (int) substr($last->voucher_number, -4) + 1 : 1;
         return 'VT-' . $year . $month . '-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
     }

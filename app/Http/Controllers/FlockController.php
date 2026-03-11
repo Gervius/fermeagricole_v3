@@ -14,7 +14,7 @@ use App\Models\DailyRecord;
 use Illuminate\Http\Request;
 use App\Events\FlockApproved;
 use Inertia\Inertia;
-
+use App\Services\ProfitabilityService;
 
 class FlockController extends Controller
 {
@@ -175,10 +175,13 @@ class FlockController extends Controller
         return redirect()->route('generation')->with('success', 'Lot soumis pour approbation.');
     }
 
-   public function show(Flock $flock)
+   public function show(Flock $flock, ProfitabilityService $profitabilityService)
     {
         // On charge les relations de base
         $flock->load(['building', 'creator', 'approver']);
+
+        // Analyse de rentabilité financière
+        $financialAnalysis = $profitabilityService->calculateForFlock($flock);
 
         // On transforme le lot en un "Cockpit" de données
         return Inertia::render('Flocks/Show', [
@@ -190,6 +193,7 @@ class FlockController extends Controller
                 'initial_quantity' => $flock->initial_quantity,
                 'current_quantity' => $flock->calculated_quantity, // Accessor dynamique
                 'status' => $flock->status,
+                'standard_mortality_rate' => $flock->standard_mortality_rate,
                 'notes' => $flock->notes,
                 // Stats de performance calculées à la volée
                 'stats' => [
@@ -197,6 +201,9 @@ class FlockController extends Controller
                         ? round(($flock->dailyRecords()->sum('losses') / $flock->initial_quantity) * 100, 2) 
                         : 0,
                     'total_eggs' => $flock->dailyRecords()->where('status', 'approved')->sum('eggs'),
+                    'egg_efficiency' => $flock->calculated_quantity > 0 && $flock->dailyRecords()->count() > 0
+                        ? round(($flock->dailyRecords()->where('status', 'approved')->sum('eggs') / ($flock->calculated_quantity * $flock->dailyRecords()->where('status', 'approved')->count())) * 100, 2)
+                        : 0,
                 ]
             ],
             // Chargement des ventes via la nouvelle table unifiée
@@ -213,7 +220,8 @@ class FlockController extends Controller
             'dailyRecords' => $flock->dailyRecords()
                 ->with(['creator'])
                 ->latest('date')
-                ->paginate(10)
+                ->paginate(10),
+            'financial_analysis' => $financialAnalysis,
         ]);
     }
     

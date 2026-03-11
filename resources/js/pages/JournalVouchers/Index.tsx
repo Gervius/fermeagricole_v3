@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { router, Head } from '@inertiajs/react';
-import { Eye, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { Eye, ChevronLeft, ChevronRight, Calendar, Download } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { useToasts } from '@/components/ToastProvider';
-import { journalVouchersIndex } from '@/routes';
+import { journalVouchersIndex, journalVoucherShow } from '@/routes';
 
 
 interface JournalEntryLine {
@@ -162,7 +162,7 @@ export default function JournalVouchersIndex({ vouchers, filters, flash }: Vouch
                                                 <td className="px-5 py-4 text-stone-600">{v.created_by}</td>
                                                 <td className="px-5 py-4">
                                                     <button
-                                                        onClick={() => router.get(route('journal-vouchers.show', v.id))}
+                                                        onClick={() => router.get(journalVoucherShow.url(v.id))}
                                                         className="p-1.5 rounded-lg text-stone-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
                                                         title="Voir"
                                                     >

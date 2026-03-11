@@ -7,6 +7,7 @@ use App\Models\Flock;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class InvoiceController extends Controller
 {
@@ -22,11 +23,35 @@ class InvoiceController extends Controller
             })
             ->when($request->payment_status, fn($q, $status) => $q->where('payment_status', $status));
 
+        // Pagination logic
+        $invoices = $query->latest()->paginate(15)->through(fn($invoice) => [
+            'id' => $invoice->id,
+            'number' => $invoice->number,
+            'customer_name' => $invoice->customer_name,
+            'date' => $invoice->date->format('d/m/Y'),
+            'due_date' => $invoice->due_date ? $invoice->due_date->format('d/m/Y') : null,
+            'total' => $invoice->total,
+            'remaining_amount' => $invoice->remaining_amount,
+            'status' => $invoice->status,
+            'payment_status' => $invoice->payment_status,
+            'is_overdue' => $invoice->due_date && $invoice->due_date->isPast() && $invoice->payment_status !== 'paid',
+            'created_by' => $invoice->creator->name,
+        ]);
+
         return Inertia::render('Invoices/Index', [
-            'invoices' => $query->latest()->paginate(10)->withQueryString(),
+            'invoices' => $invoices,
             'filters' => $request->only(['search', 'payment_status']),
             'stats' => [
-                'total_receivable' => Invoice::where('payment_status', '!=', 'paid')->sum('total'),
+                'total_revenue' => Invoice::whereNotIn('status', ['draft', 'cancelled'])->sum('total'),
+                'total_collected' => \App\Models\Payments::sum('amount'),
+                'total_receivable' => Invoice::whereNotIn('status', ['draft', 'cancelled'])
+                                        ->get()
+                                        ->sum(fn($inv) => $inv->remaining_amount),
+                'overdue_count' => Invoice::whereNotIn('status', ['draft', 'cancelled'])
+                                        ->where('payment_status', '!=', 'paid')
+                                        ->whereNotNull('due_date')
+                                        ->where('due_date', '<', now()->startOfDay())
+                                        ->count(),
             ]
         ]);
     }
@@ -50,6 +75,9 @@ class InvoiceController extends Controller
         return Inertia::render('Invoices/Create', [
             'import' => $import,
             'activeFlocks' => Flock::active()->get(['id', 'name']),
+            'customers' => \App\Models\Partner::where('is_active', true)
+                                              ->whereIn('type', ['customer', 'both'])
+                                              ->get(['id', 'name']),
             'nextInvoiceNumber' => 'FAC-' . date('Ymd') . '-' . str_pad(Invoice::count() + 1, 4, '0', STR_PAD_LEFT)
         ]);
     }
@@ -61,7 +89,7 @@ class InvoiceController extends Controller
     {
         $validated = $request->validate([
             'number' => 'required|unique:invoices',
-            'customer_name' => 'required|string',
+            'partner_id' => 'required|exists:partners,id',
             'date' => 'required|date',
             'items' => 'required|array|min:1',
             'items.*.description' => 'required|string',
@@ -74,9 +102,13 @@ class InvoiceController extends Controller
         DB::transaction(function () use ($validated) {
             $subtotal = collect($validated['items'])->sum(fn($i) => $i['quantity'] * $i['unit_price']);
 
+            // Trouver le nom du client via son ID pour la redondance
+            $partner = \App\Models\Partner::find($validated['partner_id']);
+
             $invoice = Invoice::create([
                 'number' => $validated['number'],
-                'customer_name' => $validated['customer_name'],
+                'partner_id' => $validated['partner_id'],
+                'customer_name' => $partner->name, // Conservé pour historique au cas où le partenaire est supprimé
                 'date' => $validated['date'],
                 'subtotal' => $subtotal,
                 'total' => $subtotal, // Ajoutez ici la logique de taxe si nécessaire
@@ -177,12 +209,14 @@ class InvoiceController extends Controller
     }
 
     /**
-     * Export PDF (Exemple de structure).
+     * Export PDF de la facture.
      */
     public function downloadPdf(Invoice $invoice)
     {
-        // Utilisation d'une librairie comme Barryvdh\DomPDF
-        // $pdf = Pdf::loadView('pdfs.invoice', compact('invoice'));
-        // return $pdf->download("Facture_{$invoice->number}.pdf");
+        $invoice->load(['items', 'payments']);
+        
+        $pdf = Pdf::loadView('pdfs.invoice', compact('invoice'));
+        
+        return $pdf->download("Facture_{$invoice->number}.pdf");
     }
 }

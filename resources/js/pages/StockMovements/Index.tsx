@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { router, Head } from '@inertiajs/react';
 import {
     Plus, Edit2, Trash2, Eye, CheckCircle, XCircle, AlertCircle,
-    ChevronLeft, ChevronRight, Search, ArrowDownCircle, ArrowUpCircle, Scale
+    ChevronLeft, ChevronRight, Search, ArrowDownCircle, ArrowUpCircle, Scale, Download
 } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { useToasts } from '@/components/ToastProvider';

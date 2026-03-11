@@ -14,13 +14,13 @@ class UnitController extends Controller
     public function index()
     {
         $units = Unit::with('baseUnit')->paginate(15);
-        return Inertia::render('Units/Index', ['units' => $units]);
+        return Inertia::render('Settings/Units/Index', ['units' => $units]);
     }
 
     public function create()
     {
         $baseUnits = Unit::whereNull('base_unit_id')->get(); // unités de base
-        return Inertia::render('Units/Create', ['baseUnits' => $baseUnits]);
+        return Inertia::render('Settings/Units/Create', ['baseUnits' => $baseUnits]);
     }
 
     public function store(Request $request)
@@ -36,13 +36,13 @@ class UnitController extends Controller
 
         Unit::create($validated);
 
-        return redirect()->route('units')->with('success', 'Unité créée.');
+        return redirect()->route('unitsIndex')->with('success', 'Unité créée.');
     }
 
     public function edit(Unit $unit)
     {
         $baseUnits = Unit::whereNull('base_unit_id')->get();
-        return Inertia::render('Units/Edit', [
+        return Inertia::render('Settings/Units/Edit', [
             'unit' => $unit,
             'baseUnits' => $baseUnits,
         ]);
@@ -61,13 +61,13 @@ class UnitController extends Controller
 
         $unit->update($validated);
 
-        return redirect()->route('units')->with('success', 'Unité mise à jour.');
+        return redirect()->route('unitsIndex')->with('success', 'Unité mise à jour.');
     }
 
     public function destroy(Unit $unit)
     {
         
         $unit->delete();
-        return redirect()->route('units')->with('success', 'Unité supprimée.');
+        return redirect()->route('unitsIndex')->with('success', 'Unité supprimée.');
     }
 }
