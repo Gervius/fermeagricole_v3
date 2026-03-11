@@ -16,12 +16,13 @@ class BuildingController extends Controller
     public function index()
     {
         $buildings = Building::paginate(10);
-        return Inertia::render('Buildings/Index', ['buildings' => $buildings]);
+        return Inertia::render('Settings/Buildings/Index', ['buildings' => $buildings]);
     }
 
     public function create()
     {
-        return Inertia::render('Buildings/Create');
+        // On n'utilise plus la vue Create, tout se fait via la modal dans Index
+        return redirect()->route('buildingsIndex');
     }
 
     public function store(Request $request)
@@ -34,12 +35,13 @@ class BuildingController extends Controller
 
         Building::create($validated);
 
-        return redirect()->route('buildings.index')->with('success', 'Bâtiment créé.');
+        return redirect()->back()->with('success', 'Bâtiment créé.');
     }
 
     public function edit(Building $building)
     {
-        return Inertia::render('Buildings/Edit', ['building' => $building]);
+        // On n'utilise plus la vue Edit, tout se fait via la modal dans Index
+        return redirect()->route('buildingsIndex');
     }
 
     public function update(Request $request, Building $building)
@@ -52,12 +54,12 @@ class BuildingController extends Controller
 
         $building->update($validated);
 
-        return redirect()->route('buildings.index')->with('success', 'Bâtiment mis à jour.');
+        return redirect()->back()->with('success', 'Bâtiment mis à jour.');
     }
 
     public function destroy(Building $building)
     {
         $building->delete();
-        return redirect()->route('buildings.index')->with('success', 'Bâtiment supprimé.');
+        return redirect()->back()->with('success', 'Bâtiment supprimé.');
     }
 }

@@ -13,6 +13,9 @@ use App\Http\Requests\ApproveStockMovementRequest;
 use App\Http\Requests\RejectStockMovementRequest;
 use Illuminate\Support\Facades\DB;
 use App\Services\AccountingService;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\StockMovementsExport;
+
 class StockMouvementController extends Controller
 {
 
@@ -52,6 +55,11 @@ class StockMouvementController extends Controller
             'ingredients' => $ingredients,
             'filters' => $request->only(['ingredient_id', 'status']),
         ]);
+    }
+
+    public function exportExcel()
+    {
+        return Excel::download(new StockMovementsExport, 'Mouvements_Stock_' . date('Y_m_d') . '.xlsx');
     }
 
     /**
@@ -171,12 +179,29 @@ class StockMouvementController extends Controller
 
             switch ($stockMovement->type) {
                 case 'in':
+                    // Calcul du PMP avant mise à jour du stock
+                    if ($stockMovement->unit_price && $stockMovement->unit_price > 0) {
+                        $oldValue = $ingredient->current_stock * $ingredient->pmp;
+                        $newValue = $quantityInDefaultUnit * $stockMovement->unit_price; // Prix unitaire dans l'unité du mouvement (peut nécessiter conversion si diff. unité)
+                        
+                        $newStock = $ingredient->current_stock + $quantityInDefaultUnit;
+                        
+                        if ($newStock > 0) {
+                            $ingredient->pmp = ($oldValue + $newValue) / $newStock;
+                        }
+                    }
                     $ingredient->current_stock += $quantityInDefaultUnit;
                     break;
                 case 'out':
                     $ingredient->current_stock -= $quantityInDefaultUnit;
                     break;
                 case 'adjust':
+                    // Pour un ajustement positif (trouvaille), on valorise l'entrée au PMP actuel pour ne pas fausser la moyenne
+                    // Si c'est un ajustement négatif (perte), le PMP ne change pas, seule la valeur globale du stock diminue.
+                    if ($quantityInDefaultUnit > $ingredient->current_stock && $ingredient->current_stock > 0) {
+                        // Optionnel : on maintient le PMP intact en supposant que l'excédent a la même valeur
+                        // Aucune action PMP nécessaire.
+                    }
                     $ingredient->current_stock = $quantityInDefaultUnit;
                     break;
             }

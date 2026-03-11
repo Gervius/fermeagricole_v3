@@ -22,6 +22,11 @@ export interface NavItem {
     isActive?: boolean;
 }
 
+export interface NavGroup {
+    title: string;
+    items: NavItem[];
+}
+
 export interface SharedData {
     name: string;
     quote: { message: string; author: string };

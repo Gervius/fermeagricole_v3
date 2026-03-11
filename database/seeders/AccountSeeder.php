@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use App\Models\Account;
 
 class AccountSeeder extends Seeder
 {
@@ -12,16 +13,18 @@ class AccountSeeder extends Seeder
      */
     public function run(): void
     {
+        // Basé sur le SYSCOHADA (plan simplifié pour la ferme)
         $accounts = [
-            ['code' => '512', 'name' => 'Banque', 'type' => 'asset'],
-            ['code' => '411', 'name' => 'Clients', 'type' => 'asset'],
-            ['code' => '701', 'name' => 'Ventes d\'œufs', 'type' => 'revenue'],
-            ['code' => '601', 'name' => 'Achats d\'aliments', 'type' => 'expense'],
-            ['code' => '602', 'name' => 'Soins vétérinaires', 'type' => 'expense'],
-            ['code' => '603', 'name' => 'Autres charges', 'type' => 'expense'],
-            ['code' => '4457', 'name' => 'TVA collectée', 'type' => 'liability'],
-            ['code' => '4456', 'name' => 'TVA déductible', 'type' => 'asset'],
-            ['code' => '604', 'name' => 'Achats de poules', 'type' => 'expense'],
+            ['code' => '411100', 'name' => 'Clients ordinaires', 'type' => 'asset'],
+            ['code' => '512000', 'name' => 'Banque', 'type' => 'asset'],
+            ['code' => '521000', 'name' => 'Caisse', 'type' => 'asset'],
+            ['code' => '521100', 'name' => 'Mobile Money (Orange/Wave)', 'type' => 'asset'],
+            ['code' => '701000', 'name' => 'Ventes de produits finis', 'type' => 'revenue'],
+            ['code' => '702000', 'name' => 'Ventes de réformes', 'type' => 'revenue'],
+            ['code' => '601000', 'name' => 'Achats de matières premières', 'type' => 'expense'],
+            ['code' => '622000', 'name' => 'Frais Vétérinaires & Soins', 'type' => 'expense'],
+            ['code' => '604000', 'name' => 'Achats de cheptel (Poules)', 'type' => 'expense'],
+            ['code' => '401100', 'name' => 'Fournisseurs', 'type' => 'liability'],
         ];
 
         foreach ($accounts as $acc) {

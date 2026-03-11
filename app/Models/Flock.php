@@ -21,6 +21,7 @@ class Flock extends Model
         'purchase_cost',
         'current_quantity',
         'status',
+        'standard_mortality_rate',
         'notes',
         'end_reason',
         'ended_at',
@@ -34,6 +35,7 @@ class Flock extends Model
         'approved_at' => 'datetime',
         'ended_at' => 'datetime',
         'purchase_cost' => 'decimal:2',
+        'standard_mortality_rate' => 'decimal:2',
     ];
 
     public function building(): BelongsTo

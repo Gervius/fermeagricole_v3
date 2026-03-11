@@ -3,79 +3,91 @@ import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/react';
-import { TrendingUp, TrendingDown, Egg, DollarSign, AlertCircle, Activity } from 'lucide-react';
+import { Head, router } from '@inertiajs/react';
+import { TrendingUp, TrendingDown, Egg, DollarSign, AlertCircle, Activity, Building, Bell } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Tableau de Bord',
-        href: dashboard().url,
+        href: '/dashboard',
     },
-    
 ];
 
+interface DashboardProps {
+    filters: { building_id?: number };
+    buildings: { id: number; name: string }[];
+    kpis: {
+        active_hens: number;
+        today_production: number;
+        monthly_revenue: number;
+    };
+    alerts: {
+        type: 'stock' | 'health' | 'planning';
+        level: 'critical' | 'danger' | 'warning' | 'info';
+        title: string;
+        message: string;
+    }[];
+    productionChart?: { day: string; rate: number; eggs: number }[];
+    financialChart?: { month: string; sales: number; expenses: number }[];
+}
 
-export default function Dashboard() {
+export default function Dashboard({ filters, buildings, kpis, alerts, productionChart, financialChart }: DashboardProps) {
+
+    const handleBuildingChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        router.get('/dashboard', { building_id: e.target.value }, { preserveState: true });
+    };
 
     const stats = [
         {
           label: 'Poules actives',
-          value: '12,450',
-          change: '+2.5%',
-          trend: 'up',
+          value: kpis.active_hens.toLocaleString('fr-FR'),
           icon: Egg,
           color: 'amber',
         },
         {
-          label: 'Production quotidienne',
-          value: '10,890',
-          change: '+5.2%',
-          trend: 'up',
+          label: "Œufs pondus (aujourd'hui)",
+          value: kpis.today_production.toLocaleString('fr-FR'),
           icon: Activity,
           color: 'green',
         },
         {
           label: 'Revenus ce mois',
-          value: '45,280 FCFA',
-          change: '+12.3%',
-          trend: 'up',
+          value: `${kpis.monthly_revenue.toLocaleString('fr-FR')} FCFA`,
           icon: DollarSign,
           color: 'blue',
         },
         {
           label: 'Alertes actives',
-          value: '3',
-          change: '-1',
-          trend: 'down',
-          icon: AlertCircle,
-          color: 'red',
+          value: alerts.length.toString(),
+          icon: Bell,
+          color: alerts.length > 0 ? 'red' : 'green',
         },
-      ];
-    
-      const productionData = [
-        { date: 'Lun', oeufs: 10200, taux: 87 },
-        { date: 'Mar', oeufs: 10500, taux: 89 },
-        { date: 'Mer', oeufs: 10300, taux: 88 },
-        { date: 'Jeu', oeufs: 10800, taux: 92 },
-        { date: 'Ven', oeufs: 10900, taux: 93 },
-        { date: 'Sam', oeufs: 10600, taux: 90 },
-        { date: 'Dim', oeufs: 10400, taux: 89 },
-      ];
-    
-      const revenueData = [
-        { mois: 'Juil', ventes: 38000, charges: 22000 },
-        { mois: 'Août', ventes: 41000, charges: 23500 },
-        { mois: 'Sep', ventes: 43000, charges: 24000 },
-        { mois: 'Oct', ventes: 42500, charges: 23800 },
-        { mois: 'Nov', ventes: 45280, charges: 25200 },
-      ];
-
+    ];
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Tableau de Bord" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
+                
+                {/* Header & Filtres */}
+                <div className="flex justify-between items-center bg-white p-4 rounded-lg border border-gray-200">
+                    <h1 className="text-xl font-semibold text-gray-900">Synthèse Globale</h1>
+                    <div className="flex items-center gap-2">
+                        <Building className="w-5 h-5 text-gray-400" />
+                        <select 
+                            className="border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                            value={filters.building_id || ''}
+                            onChange={handleBuildingChange}
+                        >
+                            <option value="">Tous les bâtiments</option>
+                            {buildings.map(b => (
+                                <option key={b.id} value={b.id}>{b.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+
                 <div className="grid auto-rows-min gap-4 md:grid-cols-4">
                     {stats.map((stat) => {
                         const Icon = stat.icon;
@@ -91,13 +103,9 @@ export default function Dashboard() {
                                     <div className={`p-3 rounded-lg ${colorClasses[stat.color as keyof typeof colorClasses]}`}>
                                         <Icon className="w-6 h-6" />
                                     </div>
-                                    <div className={`flex items-center gap-1 text-sm ${stat.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
-                                        {stat.trend === 'up' ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-                                        <span>{stat.change}</span>
-                                    </div>
                                 </div>
-                                <div className="text-2xl text-gray-900 mb-1">{stat.value}</div>
-                                <div className="text-sm text-gray-600">{stat.label}</div>
+                                <div className="text-2xl font-bold text-gray-900 mb-1">{stat.value}</div>
+                                <div className="text-sm font-medium text-gray-600">{stat.label}</div>
                             </div>
                         );
                     })}
@@ -110,16 +118,20 @@ export default function Dashboard() {
                             <p className="text-sm text-gray-600">Nombre d'œufs et taux de ponte</p>
                         </div>
                         <ResponsiveContainer width="100%" height={300}>
-                            <LineChart data={productionData}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                                <XAxis dataKey="date" stroke="#6b7280" />
-                                <YAxis yAxisId="left" stroke="#6b7280" />
-                                <YAxis yAxisId="right" orientation="right" stroke="#6b7280" />
-                                <Tooltip />
-                                <Legend />
-                                <Line yAxisId="left" type="monotone" dataKey="oeufs" stroke="#f59e0b" strokeWidth={2} name="Œufs produits" />
-                                <Line yAxisId="right" type="monotone" dataKey="taux" stroke="#10b981" strokeWidth={2} name="Taux (%)" />
-                            </LineChart>
+                            {productionChart ? (
+                                <LineChart data={productionChart}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                                    <XAxis dataKey="day" stroke="#6b7280" />
+                                    <YAxis yAxisId="left" stroke="#6b7280" />
+                                    <YAxis yAxisId="right" orientation="right" stroke="#6b7280" />
+                                    <Tooltip />
+                                    <Legend />
+                                    <Line yAxisId="left" type="monotone" dataKey="eggs" stroke="#f59e0b" strokeWidth={2} name="Œufs produits" />
+                                    <Line yAxisId="right" type="monotone" dataKey="rate" stroke="#10b981" strokeWidth={2} name="Taux (%)" />
+                                </LineChart>
+                            ) : (
+                                <div className="flex h-full items-center justify-center text-stone-400">Chargement...</div>
+                            )}
                         </ResponsiveContainer>
                     </div>
 
@@ -130,44 +142,57 @@ export default function Dashboard() {
                             <p className="text-sm text-gray-600">Ventes vs Charges (5 derniers mois)</p>
                         </div>
                         <ResponsiveContainer width="100%" height={300}>
-                            <BarChart data={revenueData}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                                <XAxis dataKey="mois" stroke="#6b7280" />
-                                <YAxis stroke="#6b7280" />
-                                <Tooltip />
-                                <Legend />
-                                <Bar dataKey="ventes" fill="#10b981" name="Ventes (FCFA)" />
-                                <Bar dataKey="charges" fill="#ef4444" name="Charges (FCFA)" />
-                            </BarChart>
+                            {financialChart ? (
+                                <BarChart data={financialChart}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                                    <XAxis dataKey="month" stroke="#6b7280" />
+                                    <YAxis stroke="#6b7280" />
+                                    <Tooltip formatter={(val: number) => `${val.toLocaleString('fr-FR')} FCFA`} />
+                                    <Legend />
+                                    <Bar dataKey="sales" fill="#10b981" name="Ventes (FCFA)" />
+                                    <Bar dataKey="expenses" fill="#ef4444" name="Charges (FCFA)" />
+                                </BarChart>
+                            ) : (
+                                <div className="flex h-full items-center justify-center text-stone-400">Chargement...</div>
+                            )}
                         </ResponsiveContainer>
                     </div>
                 </div>
 
-                {/* Recent Alerts boucle for a faire*/}
+                {/* Alertes Prédictives */}
                 <div className="mt-6 bg-white rounded-lg border border-gray-200 p-6">
-                    <h2 className="text-gray-900 mb-4">Alertes récentes</h2>
+                    <h2 className="text-gray-900 mb-4 font-semibold">Alertes et Actions Requises</h2>
                     <div className="space-y-3">
-                        <div className="flex items-start gap-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                            <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5" />
-                            <div className="flex-1">
-                                <div className="text-gray-900">Taux de ponte en baisse - Bâtiment A</div>
-                                <div className="text-sm text-gray-600">Génération G-2023-04 • Il y a 2 heures</div>
+                        {alerts.length === 0 ? (
+                            <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 text-sm">
+                                Tout semble fonctionner normalement. Aucune alerte critique.
                             </div>
-                        </div>
-                        <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                            <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
-                            <div className="flex-1">
-                                <div className="text-gray-900">Vaccination programmée demain</div>
-                                <div className="text-sm text-gray-600">Génération G-2023-05 • Prévoir 250 doses</div>
-                            </div>
-                        </div>
-                        <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
-                            <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
-                            <div className="flex-1">
-                                <div className="text-gray-900">Stock aliment faible</div>
-                                <div className="text-sm text-gray-600">Reste 3 jours • Commander 2 tonnes</div>
-                            </div>
-                        </div>
+                        ) : (
+                            alerts.map((alert, idx) => {
+                                const levelClasses = {
+                                    critical: 'bg-red-50 border-red-200 text-red-900',
+                                    danger: 'bg-orange-50 border-orange-200 text-orange-900',
+                                    warning: 'bg-amber-50 border-amber-200 text-amber-900',
+                                    info: 'bg-blue-50 border-blue-200 text-blue-900'
+                                };
+                                const iconColor = {
+                                    critical: 'text-red-600',
+                                    danger: 'text-orange-600',
+                                    warning: 'text-amber-600',
+                                    info: 'text-blue-600'
+                                };
+
+                                return (
+                                    <div key={idx} className={`flex items-start gap-3 p-4 border rounded-lg ${levelClasses[alert.level]}`}>
+                                        <AlertCircle className={`w-5 h-5 mt-0.5 ${iconColor[alert.level]}`} />
+                                        <div className="flex-1">
+                                            <div className="font-semibold">{alert.title}</div>
+                                            <div className="text-sm mt-1 opacity-90">{alert.message}</div>
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        )}
                     </div>
                 </div>
             </div>

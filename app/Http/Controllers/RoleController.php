@@ -28,7 +28,7 @@ class RoleController extends Controller
                 'created_at' => $role->created_at->format('d/m/Y'),
             ]);
 
-        return Inertia::render('Roles/Index', [
+        return Inertia::render('Settings/Roles/Index', [
             'roles' => $roles,
         ]);
     }
@@ -40,7 +40,7 @@ class RoleController extends Controller
             'label' => $perm->name,
         ]);
 
-        return Inertia::render('Roles/Create', [
+        return Inertia::render('Settings/Roles/Create', [
             'permissions' => $permissions,
         ]);
     }
@@ -53,7 +53,7 @@ class RoleController extends Controller
             $role->syncPermissions($request->permissions);
         }
 
-        return redirect()->route('roles.index')
+        return redirect()->route('rolesIndex')
             ->with('success', 'Rôle créé avec succès.');
     }
 
@@ -65,7 +65,7 @@ class RoleController extends Controller
             'label' => $perm->name,
         ]);
 
-        return Inertia::render('Roles/Edit', [
+        return Inertia::render('Settings/Roles/Edit', [
             'role' => [
                 'id' => $role->id,
                 'name' => $role->name,
@@ -83,7 +83,7 @@ class RoleController extends Controller
             $role->syncPermissions($request->permissions);
         }
 
-        return redirect()->route('roles.index')
+        return redirect()->route('rolesIndex')
             ->with('success', 'Rôle mis à jour.');
     }
 
@@ -91,7 +91,7 @@ class RoleController extends Controller
     {
         $role->delete();
 
-        return redirect()->route('roles.index')
+        return redirect()->route('rolesIndex')
             ->with('success', 'Rôle supprimé.');
     }
 }

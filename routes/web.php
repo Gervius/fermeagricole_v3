@@ -19,18 +19,18 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\EggSaleController;
 use App\Http\Controllers\RecipeController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FeedProductionController;
+use App\Http\Controllers\PartnerController;
+use App\Http\Controllers\InvoiceController;
 
 
 Route::get('/', function () {
-    return Inertia::render('welcome', [
-        'canRegister' => Features::enabled(Features::registration()),
-    ]);
+    return redirect()->route('login');
 })->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('dashboard', function () {
-        return Inertia::render('dashboard');
-    })->name('dashboard');
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     //Route::get('/Lots', [LotController::class, 'index'])->name('generation');
     //Route::post('/Lots', [LotController::class, 'store'])->name('generationPost');
@@ -46,6 +46,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/flocks/{flock}/end', [FlockController::class, 'end'])->name('flocksEnd');
 
     // 2. Ressources standards (index, create, store, show, edit, update, destroy)
+    Route::resource('buildings', BuildingController::class)->names([
+        'index'   => 'buildingsIndex',
+        'create'  => 'buildingsCreate',
+        'store'   => 'buildingsStore',
+        'edit'    => 'buildingsEdit',
+        'update'  => 'buildingsUpdate',
+        'destroy' => 'buildingsDestroy',
+    ])->parameters(['buildings' => 'building']);
+
     Route::resource('flocks', FlockController::class)->names([
         'index'   => 'generation',
         'create'  => 'flocksCreate',
@@ -143,37 +152,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         'treatments' => 'treatment'
     ]);
 
-    Route::post('/flock-sales/{flockSale}/approve', [FlockSaleController::class, 'approve'])->name('flockSalesApprove');
-    Route::post('/flock-sales/{flockSale}/reject', [FlockSaleController::class, 'reject'])->name('flockSalesReject');
-    
-    Route::resource('flock-sales', FlockSaleController::class)->names([
-        'index'   => 'flockSales',
-        'create'  => 'flockSaleCreate',
-        'store'   => 'flockSalesStore',
-        'show'    => 'flockSalesShow',
-        'edit'    => 'flockSalesEdit',
-        'update'  => 'flockSalesUpdate',
-        'destroy' => 'flockSalesDestroy',
-    ])
-    ->parameters([
-        'flock-sales' => 'flockSale'
-    ]);
-
-    Route::post('/egg-sales/{eggSale}/approve', [EggSaleController::class, 'approve'])->name('eggSalesApprove');
-    Route::post('/egg-sales/{eggSale}/reject', [EggSaleController::class, 'reject'])->name('eggSalesReject');
-    Route::post('/egg-sales/{eggSale}/cancel', [EggSaleController::class, 'cancel'])->name('eggSalesCancel');
-    Route::resource('egg-sales', EggSaleController::class)->names([
-        'index'   => 'eggSalesIndex',
-        'create'  => 'eggSalesCreate',
-        'store'   => 'eggSalesStore',
-        'show'    => 'eggSalesShow',
-        'edit'    => 'eggSalesEdit',
-        'update'  => 'eggSalesUpdate',
-        'destroy' => 'eggSalesDestroy',
-    ])
-    ->parameters([
-        'egg-sales' => 'eggSale'
-    ]);
 
     Route::resource('users', UserController::class)->names([
         'index'   => 'usersIndex',
@@ -215,32 +193,51 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return response()->json(['token' => session()->token()]);
     })->name('debug.csrf');
 
-    Route::get('inventaire', function () {
-        return Inertia::render('inventaire');
-    })->name('inventaire');
-
-    Route::get('comptabilite', function () {
-        return Inertia::render('comptabilite');
-    })->name('comptabilite');
-
-    Route::get('veterinaire', function () {
-        return Inertia::render('veterinaire');
-    })->name('veterinaire');
-
-    Route::get('parametrages', function () {
-        return Inertia::render('parametrages');
-    })->name('parametrages');
-
-    Route::get('vente', function () {
-        return Inertia::render('vente');
-    })->name('vente');
 
 
-    Route::resource('accounts', AccountController::class)->names(['index' => 'accountsIndex', 'show' => 'accountShow'])->parameters(['accounts' => 'account']);
+    Route::resource('accounts', AccountController::class)->names([
+        'index' => 'accountsIndex', 
+        'show' => 'accountShow',
+        'store' => 'accountsStore',
+        'update' => 'accountsUpdate',
+        'destroy' => 'accountsDestroy'
+    ])->parameters(['accounts' => 'account']);
+    
+    Route::get('/accounting/review', [JournalVoucherController::class, 'reviewIndex'])->name('accountingReview');
+    Route::put('/accounting/vouchers/{journalVoucher}', [JournalVoucherController::class, 'update'])->name('journalVouchersUpdate');
+    Route::post('/accounting/vouchers/{journalVoucher}/post', [JournalVoucherController::class, 'post'])->name('journalVouchersPost');
+
     Route::resource('journal-vouchers', JournalVoucherController::class)->only(['index', 'show'])->names([
-        'index'   => 'journalVouchers',
-        'show'  => 'journalVoucherShow',])->parameters(['journal-vouchers' => 'voucher']);
-    Route::get('/reports/balance', [ReportController::class, 'balance'])->name('reportBalance');
+        'index'   => 'journalVouchersIndex',
+        'show'  => 'journalVoucherShow',])->parameters(['journal-vouchers' => 'journalVoucher']);
+    
+    Route::resource('partners', PartnerController::class)
+        ->only(['index', 'store', 'update', 'destroy'])
+        ->names([
+            'index' => 'partnersIndex',
+            'store' => 'partnersStore',
+            'update' => 'partnersUpdate',
+            'destroy' => 'partnersDestroy',
+        ]);
+        
+    Route::get('/partners/{partner}/statement', [PartnerController::class, 'downloadStatement'])->name('partners.statement');
+
+    Route::resource('invoices', InvoiceController::class)
+        ->only(['index', 'create', 'store', 'show'])
+        ->names([
+            'index' => 'invoicesIndex',
+            'create' => 'invoicesCreate',
+            'store' => 'invoicesStore',
+            'show' => 'invoicesShow',
+        ]);
+
+    // Rapports et Exports (PDF / Excel)
+    Route::get('/invoices/{invoice}/pdf', [InvoiceController::class, 'downloadPdf'])->name('invoices.pdf');
+    Route::get('/reports/balance/pdf', [ReportController::class, 'downloadBalancePdf'])->name('reports.balance.pdf');
+    Route::get('/stock-movements/export/excel', [StockMouvementController::class, 'exportExcel'])->name('stockMovements.export');
+    Route::get('/journal-vouchers/export/excel', [JournalVoucherController::class, 'exportExcel'])->name('journalVouchers.export');
+
+    Route::get('/reports/balance', [ReportController::class, 'balance'])->name('reportsBalance');
 });
 
 require __DIR__.'/settings.php';

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { reportsBalance } from '@/routes';
+import { FileText } from 'lucide-react';
 
 
 interface BalanceLine {
@@ -45,7 +46,17 @@ export default function BalanceReport({ report, filters }: BalancePageProps) {
             <Head title="Balance générale" />
             <div className="max-w-6xl mx-auto py-8 px-4">
                 <div className="bg-white border border-stone-200 rounded-xl p-6">
-                    <h1 className="text-xl font-semibold text-stone-900 mb-6">Balance générale</h1>
+                    <div className="flex justify-between items-center mb-6">
+                        <h1 className="text-xl font-semibold text-stone-900">Balance générale</h1>
+                        <a
+                            href="/reports/balance/pdf"
+                            target="_blank"
+                            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
+                        >
+                            <FileText className="w-4 h-4" />
+                            Télécharger PDF
+                        </a>
+                    </div>
 
                     {/* Filtres */}
                     <div className="flex flex-wrap gap-3 items-end mb-6">
