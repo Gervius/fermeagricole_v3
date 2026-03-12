@@ -75,7 +75,7 @@ export default function TreatmentForm({ data, setData, errors, flocks, isEditing
             </div>
 
             <div>
-                <label className="block text-xs font-medium text-stone-600 mb-1.5">Coût (€)</label>
+                <label className="block text-xs font-medium text-stone-600 mb-1.5">Coût (FCFA)</label>
                 <input
                     type="number"
                     step="0.01"

@@ -2,6 +2,7 @@ import React from 'react';
 import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { treatmentsIndex } from '@/routes';
+import { formatCurrency } from '@/lib/utils';
 
 interface Props {
     treatment: {
@@ -57,7 +58,7 @@ export default function Show({ treatment }: Props) {
                         </div>
                         <div>
                             <dt className="text-stone-500">Coût</dt>
-                            <dd>{treatment.cost ? `${treatment.cost} €` : '-'}</dd>
+                            <dd>{treatment.cost ? formatCurrency(treatment.cost) : '-'}</dd>
                         </div>
                         <div>
                             <dt className="text-stone-500">Réf. facture</dt>

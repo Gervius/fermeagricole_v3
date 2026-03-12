@@ -134,6 +134,7 @@ class FeedProductionController extends Controller
             ->with('success', 'Production supprimée.');
     }
 
+
     public function submit(SubmitFeedProductionRequest $request, FeedProduction $feedProduction)
     {
         $this->authorize('submit', $feedProduction);
@@ -145,99 +146,24 @@ class FeedProductionController extends Controller
             ->with('success', 'Production soumise pour approbation.');
     }
 
+
+
     public function approve(ApproveFeedProductionRequest $request, FeedProduction $feedProduction)
     {
         $this->authorize('approve', $feedProduction);
 
-        // Vérifier que la recette a des ingrédients
-        $recipe = $feedProduction->recipe;
-        if ($recipe->ingredients->isEmpty()) {
-            return back()->withErrors(['recipe' => 'La recette ne contient aucun ingrédient.']);
-        }
-
-        // Calculer le facteur de production par rapport au rendement de la recette
-        $factor = $feedProduction->quantity_produced / $recipe->yield;
-
-        // Initialiser le coût total de la production pour le calcul du PMP de l'aliment
-        $totalProductionCost = 0;
-
-        // Pour chaque ingrédient de la recette, créer un mouvement de stock sortant et décrémenter le stock
-        foreach ($recipe->ingredients as $ingredient) {
-            $quantityNeeded = $ingredient->pivot->quantity * $factor;
-            
-            // Ajouter au coût total de production basé sur le PMP
-            $costForThisIngredient = $quantityNeeded * $ingredient->pmp;
-            $totalProductionCost += $costForThisIngredient;
-
-            // Créer un mouvement de sortie pour cet ingrédient
-            StockMouvement::create([
-                'ingredient_id' => $ingredient->id,
-                'type' => 'out',
-                'quantity' => $quantityNeeded,
-                'unit_id' => $ingredient->pivot->unit_id,
-                'unit_price' => $ingredient->pmp, // Traçabilité du coût à cet instant
-                'reason' => "Production aliment: {$recipe->name}",
-                'status' => 'approved',
-                'created_by' => auth()->id(),
-                'approved_by' => auth()->id(),
-                'approved_at' => now(),
-            ]);
-            
-            // Déstockage Automatique : Décrémenter le stock courant
-            // (Note: on suppose ici que l'unité du mouvement (unit_id) est égale à l'unité par défaut (default_unit_id) de l'ingrédient, sinon il faudrait convertir)
-            $ingredient->current_stock -= $quantityNeeded;
-            $ingredient->save();
-        }
-
-        // Déterminer le PMP de l'aliment final produit
-        $feedUnitPrice = $totalProductionCost / max(1, $feedProduction->quantity_produced);
-
-        // Créer un mouvement d'entrée pour l'aliment produit
-        $feedIngredient = Ingredient::firstOrCreate(
-            ['name' => $recipe->name],
-            [
-                'reference' => 'FEED-' . $recipe->id,
-                'default_unit_id' => $recipe->unit_id,
-                'current_stock' => 0,
-                'pmp' => 0, // Sera calculé juste après
-                'is_active' => true,
-            ]
-        );
-
-        // Enregistrer le mouvement d'entrée
-        StockMouvement::create([
-            'ingredient_id' => $feedIngredient->id,
-            'type' => 'in',
-            'quantity' => $feedProduction->quantity_produced,
-            'unit_id' => $feedProduction->unit_id,
-            'unit_price' => $feedUnitPrice,
-            'reason' => "Production aliment: {$recipe->name}",
-            'status' => 'approved',
-            'created_by' => auth()->id(),
-            'approved_by' => auth()->id(),
-            'approved_at' => now(),
-        ]);
-
-        // Mettre à jour le stock de l'aliment produit et son PMP
-        $oldValue = $feedIngredient->current_stock * $feedIngredient->pmp;
-        $newValue = $feedProduction->quantity_produced * $feedUnitPrice;
-        $newStock = $feedIngredient->current_stock + $feedProduction->quantity_produced;
-        
-        if ($newStock > 0) {
-            $feedIngredient->pmp = ($oldValue + $newValue) / $newStock;
-        }
-        $feedIngredient->current_stock += $feedProduction->quantity_produced;
-        $feedIngredient->save();
-
-        // Mettre à jour la production
-        $feedProduction->status = 'approved';
-        $feedProduction->approved_by = auth()->id();
-        $feedProduction->approved_at = now();
-        $feedProduction->save();
+        DB::transaction(function () use ($feedProduction) {
+            $feedProduction->status = 'approved';
+            $feedProduction->approved_by = auth()->id();
+            $feedProduction->approved_at = now();
+            $feedProduction->save(); 
+        });
 
         return redirect()->route('feed-productions.index')
             ->with('success', 'Production approuvée et stocks mis à jour.');
     }
+
+    
 
     public function reject(RejectFeedProductionRequest $request, FeedProduction $feedProduction)
     {

@@ -63,9 +63,17 @@ can_approve: boolean;
 can_reject: boolean;
 }
 
+interface PaginatedRecords {
+    data: DailyRecord[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+}
+
 interface PageProps {
 flock: Flock;
-dailyRecords: DailyRecord[];
+dailyRecords: PaginatedRecords;
 financial_analysis: any; // On passe la prop du service backend
 flash?: { success?: string; error?: string };
 [key: string]: any;
@@ -151,7 +159,7 @@ const handleWhatsAppShare = () => {
 
 // ── Statistics ──────────────────────────────
 
-const approvedRecords = dailyRecords.filter(r => r.status === 'approved');
+const approvedRecords = dailyRecords.data.filter(r => r.status === 'approved');
 const recordsStats = {
   totalLosses: approvedRecords.reduce((s, r) => s + r.losses, 0),
   avgEggs: approvedRecords.length
@@ -369,7 +377,7 @@ return (
         </div>
 
             {/* ── Daily records table ── */}
-            {dailyRecords.length > 0 && (
+            {dailyRecords.data.length > 0 && (
               <div className="bg-white border border-stone-200 rounded-xl overflow-hidden">
                 <div className="px-6 py-4 border-b border-stone-100">
                   <h2 className="text-lg font-semibold text-stone-900">Suivi journalier</h2>
@@ -386,7 +394,7 @@ return (
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-stone-100">
-                      {dailyRecords.map(record => {
+                      {dailyRecords.data.map(record => {
                         const rsm = RECORD_STATUS_META[record.status];
                         return (
                           <tr key={record.id} className="hover:bg-stone-50">
@@ -420,7 +428,7 @@ return (
               </div>
             )}
 
-            {dailyRecords.length === 0 && flock.status === 'active' && (
+            {dailyRecords.data.length === 0 && flock.status === 'active' && (
               <div className="bg-stone-50 border border-stone-200 rounded-xl p-8 text-center">
                 <p className="text-stone-500">Aucun enregistrement journalier pour ce lot.</p>
               </div>

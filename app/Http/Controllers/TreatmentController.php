@@ -10,6 +10,7 @@ use App\Http\Requests\UpdateTreatmentRequest;
 use App\Http\Requests\ApproveTreatmentRequest;
 use App\Http\Requests\RejectTreatmentRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
@@ -52,10 +53,39 @@ class TreatmentController extends Controller
 
         $flocks = Flock::all(['id', 'name']);
 
+        // Calcul du coût moyen par poule
+        $totalApprovedCost = Treatment::where('status', 'approved')->sum('cost');
+
+        // Récupérer les lots actifs et sommer leur effectif calculé
+        $activeFlocks = Flock::where('status', 'active')->get();
+        $activeBirds = $activeFlocks->sum(fn($flock) => $flock->calculated_quantity);
+
+        $averageCostPerBird = $activeBirds > 0 ? round($totalApprovedCost / $activeBirds, 2) : 0;
+        // Liste des traitements à venir (pour les alertes)
+        $upcomingTreatments = Treatment::with('flock')
+            ->where('treatment_date', '>=', now())
+            ->where('status', 'draft') // Seulement les brouillons (programmés)
+            ->orderBy('treatment_date')
+            ->take(5)
+            ->get()
+            ->map(fn($t) => [
+                'id' => $t->id,
+                'flock_name' => $t->flock->name,
+                'treatment_date' => $t->treatment_date->format('Y-m-d'),
+                'treatment_type' => $t->treatment_type,
+                'days_left' => now()->diffInDays($t->treatment_date, false),
+        ]);
+
         return Inertia::render('Treatments/Index', [
             'treatments' => $treatments,
             'flocks' => $flocks,
             'filters' => $request->only(['flock_id', 'status']),
+            'stats' => [
+                'total_cost' => $totalApprovedCost,
+                'average_cost_per_bird' => $averageCostPerBird,
+                'active_birds' => $activeBirds,
+            ],
+            'upcoming_treatments' => $upcomingTreatments,
         ]);
     }
 
@@ -131,14 +161,13 @@ class TreatmentController extends Controller
     public function approve(ApproveTreatmentRequest $request, Treatment $treatment)
     {
         $this->authorize('approve', $treatment);
+        DB::transaction(function () use ($treatment) {
+            $treatment->status = 'approved';
+            $treatment->approved_by = auth()->id();
+            $treatment->approved_at = now();
+            $treatment->save();
 
-        $treatment->status = 'approved';
-        $treatment->approved_by = auth()->id();
-        $treatment->approved_at = now();
-        $treatment->save();
-
-        // Déclencher l'event pour la comptabilité
-        event(new \App\Events\TreatmentApproved($treatment));
+        });
 
         return redirect()->back()->with('success', 'Traitement approuvé.');
     }

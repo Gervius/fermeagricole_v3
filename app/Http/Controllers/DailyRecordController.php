@@ -14,6 +14,7 @@ use Inertia\Inertia;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\DB;
 
 
 class DailyRecordController extends Controller
@@ -64,49 +65,8 @@ class DailyRecordController extends Controller
         ]);
     }
 
-    /*
-      *Enregistre un nouveau suivi (statut pending).
     
-    * public function store(StoreDailyRecordRequest $request)
-    *{
-     *   try {
-            $data = $request->validated();
-            $data['created_by'] = auth()->id();
-            $data['status'] = 'pending';
-
-            $record = DailyRecord::create($data);
-
-            if ($request->wantsJson()) {
-                return response()->json(['message' => 'Suivi créé', 'record' => [
-                    'id' => $record->id,
-                    'date' => $record->date->format('Y-m-d'),
-                    'losses' => $record->losses,
-                    'eggs' => $record->eggs,
-                    'notes' => $record->notes,
-                    'status' => $record->status,
-                ]], 201);
-            }
-
-            return redirect()->back()->with('success', 'Suivi créé et soumis pour approbation.');
-        } catch (ValidationException $e) {
-            if ($request->wantsJson()) {
-                return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
-            }
-            throw $e;
-        } catch (AuthorizationException $e) {
-            if ($request->wantsJson()) {
-                return response()->json(['message' => 'Unauthorized.'], 403);
-            }
-            abort(403);
-        } catch (\Throwable $e) {
-            if ($request->wantsJson()) {
-                return response()->json(['message' => 'Server error.'], 500);
-            }
-            throw $e;
-        }
-    }
-        */
-
+    
     public function store(StoreDailyRecordRequest $request)
     {
         $data = $request->validated();
@@ -139,22 +99,22 @@ class DailyRecordController extends Controller
     public function approve(ApproveDailyRecordRequest $request, DailyRecord $dailyRecord)
     {
         $this->authorize('approve', $dailyRecord);
-        $dailyRecord->status = 'approved';
-        $dailyRecord->approved_by = auth()->id();
-        $dailyRecord->approved_at = now();
-        $dailyRecord->save();
 
-        // Mettre à jour le lot
         $flock = $dailyRecord->flock;
-        // Mise à jour de la quantité actuelle (pertes)
-        $flock->current_quantity = max(0, $flock->current_quantity - $dailyRecord->losses);
-        // Ajout des œufs produits au cumul du lot
-        $flock->eggs_produced += $dailyRecord->eggs;
-        $flock->save();
 
-        // Mise à jour du stock global
-        EggStock::add($dailyRecord->eggs);
+        DB::transaction(function () use ($dailyRecord, $flock) {
+            $dailyRecord->status = 'approved';
+            $dailyRecord->approved_by = auth()->id();
+            $dailyRecord->approved_at = now();
+            $dailyRecord->save(); // ← l'observateur crée EggMovement
 
+            // Mise à jour du lot
+            
+            $flock->current_quantity = max(0, $flock->current_quantity - $dailyRecord->losses);
+            $flock->eggs_produced += $dailyRecord->eggs;
+            $flock->save();
+        });
+        
         return back()->with([
             'updatedRecord' => [
                 'id' => $dailyRecord->id,
@@ -162,9 +122,9 @@ class DailyRecordController extends Controller
                 'approved_at' => $dailyRecord->approved_at->format('d/m/Y H:i'),
             ],
             'updatedFlock' => [
-            'id' => $flock->id,
-            'current_quantity' => $flock->current_quantity,
-            'eggs_produced' => $flock->eggs_produced,
+                'id' => $flock->id,
+                'current_quantity' => $flock->current_quantity,
+                'eggs_produced' => $flock->eggs_produced,
             
             ],
         ]);

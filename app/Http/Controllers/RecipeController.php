@@ -31,9 +31,15 @@ class RecipeController extends Controller
 
     public function store(StoreRecipeRequest $request)
     {
-        $recipe = Recipe::create($request->only(['name', 'description', 'yield', 'unit_id', 'is_active']));
+        $recipe = Recipe::create([
+            'name' => $request->name,
+            'description' => $request->description,
+            'yield' => $request->yield, // au lieu de 'yield'
+            'unit_id' => $request->unit_id,   // au lieu de 'unit_id'
+            'is_active' => $request->is_active ?? true,
+        ]);
 
-        // Attacher les ingrédients avec leurs quantités
+        // Attacher les ingrédients
         foreach ($request->ingredients as $ing) {
             $recipe->ingredients()->attach($ing['ingredient_id'], [
                 'quantity' => $ing['quantity'],
@@ -41,7 +47,7 @@ class RecipeController extends Controller
             ]);
         }
 
-        return redirect()->route('recipes.index')->with('success', 'Recette créée.');
+        return redirect()->route('recipesIndex')->with('success', 'Recette créée.');
     }
 
     public function edit(Recipe $recipe)

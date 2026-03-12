@@ -39,8 +39,12 @@ class FlockController extends Controller
             'current_quantity' => $flock->calculated_quantity, // Utilise l'Accessor dynamique
             'status' => $flock->status,
             'creator' => $flock->creator->name,
+            'can_edit'    => auth()->user()->can('update', $flock),  // 'update' correspond à ta Policy
+            'can_submit'  => auth()->user()->can('submit', $flock),
             'can_approve' => auth()->user()->can('approve', $flock),
-            'can_end' => $flock->isActiveAndRunning(),
+            'can_reject'  => auth()->user()->can('reject', $flock),
+            'can_delete'  => auth()->user()->can('delete', $flock),
+            'can_end'     => auth()->user()->can('end', $flock),
         ]);
 
         return Inertia::render('Flocks/Index', [
@@ -68,7 +72,7 @@ class FlockController extends Controller
 
         if ($validated['end_reason'] === 'sale') {
             // Unification : Rediriger vers la création de facture avec les données pré-remplies
-            return redirect()->route('invoices.create', [
+            return redirect()->route('invoicesCreate', [
                 'source_id' => $flock->id,
                 'source_type' => 'flock',
                 'description' => "Vente totale du lot : " . $flock->name,
@@ -97,7 +101,7 @@ class FlockController extends Controller
         return redirect()->route('generation')->with('success', 'Lot créé en brouillon.');
     }
 
-    public function approve(Flock $flock)
+    public function approve(ApproveFlockRequest $request,Flock $flock)
     {
         $this->authorize('approve', $flock);
 
@@ -175,7 +179,8 @@ class FlockController extends Controller
         return redirect()->route('generation')->with('success', 'Lot soumis pour approbation.');
     }
 
-   public function show(Flock $flock, ProfitabilityService $profitabilityService)
+    /*
+    public function show(Flock $flock, ProfitabilityService $profitabilityService)
     {
         // On charge les relations de base
         $flock->load(['building', 'creator', 'approver']);
@@ -217,6 +222,60 @@ class FlockController extends Controller
                     'total' => $item->total,
                 ]),
             // On garde tes dailyRecords mais on les pagine pour l'UX
+            'dailyRecords' => $flock->dailyRecords()
+                ->with(['creator'])
+                ->latest('date')
+                ->paginate(10),
+            'financial_analysis' => $financialAnalysis,
+        ]);
+    }
+    */
+    public function show(Flock $flock, ProfitabilityService $profitabilityService)
+    {
+        $flock->load(['building', 'creator', 'approver']);
+
+        $financialAnalysis = $profitabilityService->calculateForFlock($flock);
+
+        // Pré-calculs pour les stats
+        $losses = $flock->dailyRecords()->sum('losses');
+        $approvedRecords = $flock->dailyRecords()->where('status', 'approved');
+        $approvedCount = $approvedRecords->count();
+        $approvedEggs = $approvedRecords->sum('eggs');
+        $calculatedQuantity = $flock->calculated_quantity;
+
+        return Inertia::render('Flocks/Show', [
+            'flock' => [
+                'id' => $flock->id,
+                'name' => $flock->name,
+                'building' => $flock->building->name,
+                'arrival_date' => $flock->arrival_date->format('Y-m-d'),
+                'initial_quantity' => $flock->initial_quantity,
+                'current_quantity' => $calculatedQuantity,
+                'status' => $flock->status,
+                'standard_mortality_rate' => $flock->standard_mortality_rate,
+                'notes' => $flock->notes,
+                'creator' => $flock->creator->name,
+                'approver' => $flock->approver?->name,
+                'approved_at' => $flock->approved_at?->format('d/m/Y H:i'),
+                'stats' => [
+                    'mortality_rate' => $flock->initial_quantity > 0
+                        ? round(($losses / $flock->initial_quantity) * 100, 2)
+                        : 0,
+                    'total_eggs' => $approvedEggs,
+                    'egg_efficiency' => $calculatedQuantity > 0 && $approvedCount > 0
+                        ? round(($approvedEggs / ($calculatedQuantity * $approvedCount)) * 100, 2)
+                        : 0,
+                ]
+            ],
+            'sales_history' => $flock->invoiceItems()
+                ->with('invoice')
+                ->get()
+                ->map(fn($item) => [
+                    'date' => $item->invoice->date->format('d/m/Y'),
+                    'invoice_number' => $item->invoice->number,
+                    'quantity' => $item->quantity,
+                    'total' => $item->total,
+                ]),
             'dailyRecords' => $flock->dailyRecords()
                 ->with(['creator'])
                 ->latest('date')

@@ -36,7 +36,7 @@ class Partner extends Model
             ->where('status', '!=', 'cancelled')
             ->sum('total');
             
-        $totalPaid = \App\Models\Payments::whereHas('invoice', function ($query) {
+        $totalPaid = Payment::whereHas('invoice', function ($query) {
                 $query->where('partner_id', $this->id)
                       ->where('status', '!=', 'cancelled');
             })->sum('amount');

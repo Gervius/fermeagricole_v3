@@ -55,4 +55,33 @@ class Ingredient extends Model
     {
         return $this->belongsToMany(Recipe::class, 'recipe_ingredients');
     }
+
+    // app/Models/Ingredient.php
+
+    public function updatePmpAfterEntry(float $quantity, float $unitPrice, Unit $unit): void
+    {
+        // Convertir la quantité et le prix dans l'unité par défaut de l'ingrédient
+        $conversionService = app(UnitConversionService::class);
+        
+        $quantityInDefaultUnit = $conversionService->convert($quantity, $unit, $this->defaultUnit);
+        
+        // Le prix unitaire doit être exprimé dans l'unité du mouvement, mais pour le PMP on a besoin du prix dans l'unité par défaut
+        // Si l'unité du mouvement est différente de l'unité par défaut, il faut aussi convertir le prix.
+        // Exemple : achat de 1000 kg à 200 FCFA/kg, l'unité par défaut est la tonne (1000 kg). Le prix par tonne sera 200 * 1000 = 200 000 FCFA/tonne.
+        // Plus généralement, on convertit le prix unitaire dans l'unité par défaut en multipliant par le facteur de conversion.
+        $priceInDefaultUnit = $unitPrice;
+        if ($unit->id !== $this->default_unit_id) {
+            // Pour convertir un prix unitaire, on utilise le même facteur de conversion que pour la quantité
+            $priceInDefaultUnit = $unitPrice * $conversionService->convert(1, $unit, $this->defaultUnit);
+        }
+
+        $oldValue = $this->current_stock * $this->pmp;
+        $newValue = $quantityInDefaultUnit * $priceInDefaultUnit;
+        $newStock = $this->current_stock + $quantityInDefaultUnit;
+
+        if ($newStock > 0) {
+            $this->pmp = ($oldValue + $newValue) / $newStock;
+        }
+        $this->current_stock = $newStock;
+    }
 }

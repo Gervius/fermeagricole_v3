@@ -5,7 +5,10 @@ import RecipeForm from '@/components/Recipes/RecipeForm';
 import { recipesCreate, recipesStore, recipesIndex } from '@/routes';
 
 interface Props {
-    ingredients: { id: number; name: string; default_unit_id: number; default_unit_symbol: string }[];
+    ingredients: {
+        quantity: number;
+        rawMaterialId: any; id: number; name: string; default_unit_id: number; default_unit_symbol: string 
+}[];
     units: { id: number; name: string; symbol: string }[];
 }
 
@@ -14,11 +17,13 @@ export default function Create({ ingredients, units }: Props) {
         code: '',
         name: '',
         description: '',
-        yield_quantity: '',
-        yield_unit_id: '',
+        yield: '',
+        unit_id: '',
         is_active: true,
         ingredients: [],
     });
+
+    
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -62,4 +67,8 @@ export default function Create({ ingredients, units }: Props) {
             </div>
         </AppLayout>
     );
+}
+
+function setShowCreateModal(arg0: boolean) {
+    throw new Error('Function not implemented.');
 }

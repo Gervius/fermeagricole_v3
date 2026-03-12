@@ -107,14 +107,14 @@ export default function BalanceReport({ report, filters }: BalancePageProps) {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-stone-200">
-                                {report.accounts.map((line, idx) => (
+                                {report?.accounts?.map((line, idx) => (
                                     <tr key={idx} className="hover:bg-stone-50">
                                         <td className="px-4 py-2 font-mono">{line.code}</td>
                                         <td className="px-4 py-2">{line.name}</td>
-                                        <td className="px-4 py-2 text-right">{line.debit.toLocaleString('fr-FR')} €</td>
-                                        <td className="px-4 py-2 text-right">{line.credit.toLocaleString('fr-FR')} €</td>
+                                        <td className="px-4 py-2 text-right">{line?.debit?.toLocaleString('fr-FR')} €</td>
+                                        <td className="px-4 py-2 text-right">{line?.credit?.toLocaleString('fr-FR')} €</td>
                                         <td className={`px-4 py-2 text-right font-medium ${line.balance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                                            {line.balance.toLocaleString('fr-FR')} €
+                                            {line?.balance?.toLocaleString('fr-FR')} €
                                         </td>
                                     </tr>
                                 ))}
@@ -122,15 +122,15 @@ export default function BalanceReport({ report, filters }: BalancePageProps) {
                             <tfoot className="bg-stone-50 font-medium">
                                 <tr>
                                     <td colSpan={2} className="px-4 py-2 text-right">Totaux :</td>
-                                    <td className="px-4 py-2 text-right">{report.total_debit.toLocaleString('fr-FR')} €</td>
-                                    <td className="px-4 py-2 text-right">{report.total_credit.toLocaleString('fr-FR')} €</td>
+                                    <td className="px-4 py-2 text-right">{report?.total_debit?.toLocaleString('fr-FR')} €</td>
+                                    <td className="px-4 py-2 text-right">{report?.total_credit?.toLocaleString('fr-FR')} €</td>
                                     <td className="px-4 py-2 text-right">—</td>
                                 </tr>
                             </tfoot>
                         </table>
                     </div>
 
-                    {report.accounts.length === 0 && (
+                    {report?.accounts?.length === 0 && (
                         <p className="text-center text-stone-400 py-8">Aucune écriture pour la période sélectionnée.</p>
                     )}
                 </div>
