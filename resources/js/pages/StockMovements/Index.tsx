@@ -7,6 +7,7 @@ import {
 import AppLayout from '@/layouts/app-layout';
 import { useToasts } from '@/components/ToastProvider';
 import { stockMovementsIndex, stockMovementsCreate, stockMovementsEdit, stockMovementsDestroy, stockMovementsApprove, stockMovementsReject, stockMovementsShow } from '@/routes';
+import { formatCurrency } from '@/lib/utils';
 
 
 
@@ -269,7 +270,7 @@ export default function StockMovementsIndex({ movements, ingredients, filters, f
                                                         {m.quantity} {m.unit}
                                                     </td>
                                                     <td className="px-5 py-4 text-stone-600">
-                                                        {m.unit_price ? `${m.unit_price} €` : '-'}
+                                                        {m.unit_price ? formatCurrency(m.unit_price) : '-'}
                                                     </td>
                                                     <td className="px-5 py-4 text-stone-600 max-w-[200px] truncate">
                                                         {m.reason || '-'}
@@ -365,7 +366,7 @@ export default function StockMovementsIndex({ movements, ingredients, filters, f
                             <InfoRow label="Ingrédient" value={selectedMovement.ingredient} />
                             <InfoRow label="Type" value={TYPE_META[selectedMovement.type].label} />
                             <InfoRow label="Quantité" value={`${selectedMovement.quantity} ${selectedMovement.unit}`} />
-                            <InfoRow label="Prix unitaire" value={selectedMovement.unit_price ? `${selectedMovement.unit_price} €` : '-'} />
+                            <InfoRow label="Prix unitaire" value={selectedMovement.unit_price ? formatCurrency(selectedMovement.unit_price) : '-'} />
                             <InfoRow label="Motif" value={selectedMovement.reason || '-'} />
                         </div>
 

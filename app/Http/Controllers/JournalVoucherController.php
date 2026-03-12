@@ -27,10 +27,13 @@ class JournalVoucherController extends Controller
                 'id' => $v->id,
                 'voucher_number' => $v->voucher_number,
                 'status' => $v->status,
-                'date' => $v->date->format('d/m/Y'),
+                'date' => $v->date->format('Y-m-d'), // On garde le format Y-m-d pour le constructeur Date de JS
                 'description' => $v->description,
                 'created_by' => $v->creator->name,
                 'entries_count' => $v->entries()->count(),
+                // AJOUT DES CHAMPS MANQUANTS ICI :
+                'source_type' => $v->source_type,
+                'source_id' => $v->source_id,
             ]);
 
         return Inertia::render('JournalVouchers/Index', [

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Building;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 
 class BuildingController extends Controller

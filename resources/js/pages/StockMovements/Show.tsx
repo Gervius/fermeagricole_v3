@@ -53,7 +53,7 @@ export default function Show({ movement }: Props) {
                         </div>
                         <div>
                             <dt className="text-stone-500">Prix unitaire</dt>
-                            <dd>{movement.unit_price ? `${movement.unit_price} €` : '-'}</dd>
+                            <dd>{movement.unit_price ? `${movement.unit_price} FCFA` : '-'}</dd>
                         </div>
                         <div>
                             <dt className="text-stone-500">Motif</dt>

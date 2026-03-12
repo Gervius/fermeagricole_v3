@@ -2,55 +2,56 @@
 
 namespace App\Observers;
 
-use App\Models\Payments;
+use App\Models\Payment;
 
 class PaymentObserver
 {
     /**
-     * Handle the Payments "created" event.
+     * Handle the Payment "created" event.
      */
-    public function created(Payments $payments): void
+    public function created(Payment $payment): void
     {
-        $this->updateInvoicePaymentStatus($payments->invoice);
+        $this->updateInvoicePaymenttatus($payment->invoice);
+        app(AccountingService::class)->createForPayment($payment);
     }
 
     /**
-     * Handle the Payments "updated" event.
+     * Handle the Payment "updated" event.
      */
-    public function updated(Payments $payments): void
+    public function updated(Payment $payment): void
     {
-        $this->updateInvoicePaymentStatus($payments->invoice);
+        $this->updateInvoicePaymenttatus($payment->invoice);
     }
 
     /**
-     * Handle the Payments "deleted" event.
+     * Handle the Payment "deleted" event.
      */
-    public function deleted(Payments $payments): void
+    public function deleted(Payment $payment): void
     {
-        $this->updateInvoicePaymentStatus($payments->invoice);
+        $this->updateInvoicePaymenttatus($payment->invoice);
     }
 
     /**
-     * Handle the Payments "restored" event.
+     * Handle the Payment "restored" event.
      */
-    public function restored(Payments $payments): void
+    public function restored(Payment $payment): void
     {
-        $this->updateInvoicePaymentStatus($payments->invoice);
+        $this->updateInvoicePaymenttatus($payment->invoice);
     }
 
     /**
-     * Handle the Payments "force deleted" event.
+     * Handle the Payment "force deleted" event.
      */
-    public function forceDeleted(Payments $payments): void
+    public function forceDeleted(Payment $payment): void
     {
-        $this->updateInvoicePaymentStatus($payments->invoice);
+        $this->updateInvoicePaymenttatus($payment->invoice);
     }
 
-    private function updateInvoicePaymentStatus($invoice): void
+    private function updateInvoicePaymenttatus($invoice): void
     {
         if (!$invoice) return;
 
-        $totalPaid = $invoice->payments()->sum('amount');
+        $totalPaid = $invoice->Payment()->sum('amount');
         
         if ($totalPaid >= $invoice->total) {
             $invoice->payment_status = 'paid';

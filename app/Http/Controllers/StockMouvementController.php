@@ -86,7 +86,7 @@ class StockMouvementController extends Controller
 
         StockMouvement::create($data);
 
-        return redirect()->route('stock-movements.index')
+        return redirect()->route('stockMovementsIndex')
             ->with('success', 'Mouvement enregistré et en attente d\'approbation.');
     }
 
@@ -140,7 +140,7 @@ class StockMouvementController extends Controller
     /**
      * Mise à jour (uniquement si en attente)
      */
-    public function update(StoreStockMovementRequest $request, StockMovement $stockMovement)
+    public function update(StoreStockMovementRequest $request, StockMouvement $stockMovement)
     {
         $this->authorize('update', $stockMovement);
 
@@ -166,56 +166,17 @@ class StockMouvementController extends Controller
     /**
      * Approbation d'un mouvement
      */
-    public function approve(ApproveStockMovementRequest $request, StockMovement $stockMovement)
+    // Dans StockMouvementController@approve
+    // Dans StockMouvementController@approve
+    public function approve(ApproveStockMovementRequest $request, StockMouvement $stockMovement)
     {
         $this->authorize('approve', $stockMovement);
 
         DB::transaction(function () use ($stockMovement) {
-            // Mise à jour du stock (code existant)
-            $ingredient = $stockMovement->ingredient;
-            $unit = $stockMovement->unit;
-            $defaultUnit = $ingredient->defaultUnit;
-            $quantityInDefaultUnit = $this->convertQuantity($stockMovement->quantity, $unit, $defaultUnit);
-
-            switch ($stockMovement->type) {
-                case 'in':
-                    // Calcul du PMP avant mise à jour du stock
-                    if ($stockMovement->unit_price && $stockMovement->unit_price > 0) {
-                        $oldValue = $ingredient->current_stock * $ingredient->pmp;
-                        $newValue = $quantityInDefaultUnit * $stockMovement->unit_price; // Prix unitaire dans l'unité du mouvement (peut nécessiter conversion si diff. unité)
-                        
-                        $newStock = $ingredient->current_stock + $quantityInDefaultUnit;
-                        
-                        if ($newStock > 0) {
-                            $ingredient->pmp = ($oldValue + $newValue) / $newStock;
-                        }
-                    }
-                    $ingredient->current_stock += $quantityInDefaultUnit;
-                    break;
-                case 'out':
-                    $ingredient->current_stock -= $quantityInDefaultUnit;
-                    break;
-                case 'adjust':
-                    // Pour un ajustement positif (trouvaille), on valorise l'entrée au PMP actuel pour ne pas fausser la moyenne
-                    // Si c'est un ajustement négatif (perte), le PMP ne change pas, seule la valeur globale du stock diminue.
-                    if ($quantityInDefaultUnit > $ingredient->current_stock && $ingredient->current_stock > 0) {
-                        // Optionnel : on maintient le PMP intact en supposant que l'excédent a la même valeur
-                        // Aucune action PMP nécessaire.
-                    }
-                    $ingredient->current_stock = $quantityInDefaultUnit;
-                    break;
-            }
-            $ingredient->save();
-
             $stockMovement->status = 'approved';
             $stockMovement->approved_by = auth()->id();
             $stockMovement->approved_at = now();
-            $stockMovement->save();
-
-            // Si c'est une entrée avec un prix (achat), générer une écriture comptable
-            if ($stockMovement->type === 'in' && $stockMovement->unit_price) {
-                event(new \App\Events\StockMovementApproved($stockMovement));
-            }
+            $stockMovement->save(); // ← déclenche l'observer
         });
 
         return redirect()->back()->with('success', 'Mouvement approuvé et stock mis à jour.');
@@ -224,7 +185,7 @@ class StockMouvementController extends Controller
     /**
      * Rejet d'un mouvement
      */
-    public function reject(RejectStockMovementRequest $request, StockMovement $stockMovement)
+    public function reject(RejectStockMovementRequest $request, StockMouvement $stockMovement)
     {
         $this->authorize('reject', $stockMovement);
 

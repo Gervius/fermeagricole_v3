@@ -10,6 +10,7 @@ import {
     BookOpen, Users, Cookie, Settings as SettingsIcon, ShieldCheck
 } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
+import { accountsIndex, buildingsIndex, ingredientsIndex, unitsIndex, usersIndex } from '@/routes';
 
 interface NavSection {
     title: string;
@@ -24,26 +25,26 @@ const navSections: NavSection[] = [
     {
         title: 'Infrastructure',
         items: [
-            { title: 'Bâtiments', href: '/settings/buildings', icon: Building2 },
+            { title: 'Bâtiments', href: buildingsIndex(), icon: Building2 },
         ]
     },
     {
         title: 'Référentiels',
         items: [
-            { title: 'Unités de mesure', href: '/settings/units', icon: Weight },
-            { title: 'Catalogue d\'ingrédients', href: '/settings/ingredients', icon: Cookie },
+            { title: 'Unités de mesure', href: unitsIndex(), icon: Weight },
+            { title: 'Catalogue d\'ingrédients', href: ingredientsIndex(), icon: Cookie },
         ]
     },
     {
         title: 'Finance',
         items: [
-            { title: 'Plan comptable', href: '/settings/accounts', icon: BookOpen },
+            { title: 'Plan comptable', href: accountsIndex(), icon: BookOpen },
         ]
     },
     {
         title: 'Sécurité & Accès',
         items: [
-            { title: 'Utilisateurs', href: '/settings/users', icon: Users },
+            { title: 'Utilisateurs', href: usersIndex(), icon: Users },
             { title: 'Rôles & Permissions', href: '/settings/roles', icon: ShieldCheck },
         ]
     },

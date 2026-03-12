@@ -4,10 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Invoice;
 use App\Models\Flock;
+use App\Models\Partner;
+use App\Models\Payment;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\AccountingService;
 
 class InvoiceController extends Controller
 {
@@ -43,7 +46,7 @@ class InvoiceController extends Controller
             'filters' => $request->only(['search', 'payment_status']),
             'stats' => [
                 'total_revenue' => Invoice::whereNotIn('status', ['draft', 'cancelled'])->sum('total'),
-                'total_collected' => \App\Models\Payments::sum('amount'),
+                'total_collected' => Payment::sum('amount'),
                 'total_receivable' => Invoice::whereNotIn('status', ['draft', 'cancelled'])
                                         ->get()
                                         ->sum(fn($inv) => $inv->remaining_amount),
@@ -75,7 +78,7 @@ class InvoiceController extends Controller
         return Inertia::render('Invoices/Create', [
             'import' => $import,
             'activeFlocks' => Flock::active()->get(['id', 'name']),
-            'customers' => \App\Models\Partner::where('is_active', true)
+            'customers' => Partner::where('is_active', true)
                                               ->whereIn('type', ['customer', 'both'])
                                               ->get(['id', 'name']),
             'nextInvoiceNumber' => 'FAC-' . date('Ymd') . '-' . str_pad(Invoice::count() + 1, 4, '0', STR_PAD_LEFT)
@@ -103,7 +106,7 @@ class InvoiceController extends Controller
             $subtotal = collect($validated['items'])->sum(fn($i) => $i['quantity'] * $i['unit_price']);
 
             // Trouver le nom du client via son ID pour la redondance
-            $partner = \App\Models\Partner::find($validated['partner_id']);
+            $partner = Partner::find($validated['partner_id']);
 
             $invoice = Invoice::create([
                 'number' => $validated['number'],
@@ -129,7 +132,7 @@ class InvoiceController extends Controller
             }
         });
 
-        return redirect()->route('invoices.index')->with('success', 'Facture enregistrée. En attente de validation.');
+        return redirect()->route('invoicesIndex')->with('success', 'Facture enregistrée. En attente de validation.');
     }
 
     /**
@@ -138,14 +141,18 @@ class InvoiceController extends Controller
     public function approve(Invoice $invoice)
     {
         $this->authorize('approve', $invoice);
+        
+        DB::transaction(function () use ($invoice) {
+            $invoice->update([
+                'status' => 'approved',
+                'approved_by' => auth()->id(),
+                'approved_at' => now(),
+            ]);
+            // L'observer InvoiceObserver va s'exécuter et créer les écritures/mouvements
+            // Comme on est dans une transaction, si l'observer échoue, tout est rollback.
+        });
 
-        $invoice->update([
-            'status' => 'approved',
-            'approved_by' => auth()->id(),
-            'approved_at' => now(),
-        ]);
-
-        return back()->with('success', 'Facture approuvée. Les stocks et journaux ont été mis à jour.');
+        return back()->with('success', 'Facture approuvée.');
     }
 
     public function show(Invoice $invoice)
@@ -164,28 +171,28 @@ class InvoiceController extends Controller
         $validated = $request->validate([
             'amount' => 'required|numeric|min:1|max:' . ($invoice->total - $invoice->payments()->sum('amount')),
             'payment_date' => 'required|date',
-            'method' => 'required|string', // Espèces, Orange Money, Wave, Virement
+            'method' => 'required|string',
             'reference' => 'nullable|string',
         ]);
 
-        $invoice->payments()->create([
-            'amount' => $validated['amount'],
-            'payment_date' => $validated['payment_date'],
-            'method' => $validated['method'],
-            'reference' => $validated['reference'],
-            'created_by' => auth()->id(),
-        ]);
+        DB::transaction(function () use ($invoice, $validated) {
+            $payment = $invoice->payments()->create([
+                'amount' => $validated['amount'],
+                'payment_date' => $validated['payment_date'],
+                'method' => $validated['method'],
+                'reference' => $validated['reference'],
+                'created_by' => auth()->id(),
+            ]);
 
-        // Mise à jour automatique du statut de paiement
-        $totalPaid = $invoice->payments()->sum('amount');
-        if ($totalPaid >= $invoice->total) {
-            $invoice->update(['payment_status' => 'paid']);
-        } else {
-            $invoice->update(['payment_status' => 'partial']);
-        }
+            // Le PaymentObserver va mettre à jour le statut de la facture (dans la même transaction)
+
+            // Créer l'écriture comptable du paiement
+            app(AccountingService::class)->createForPayment($payment);
+        });
 
         return back()->with('success', 'Paiement enregistré avec succès.');
     }
+
 
     /**
      * Annuler une facture (avec gestion des stocks et compta).
@@ -201,11 +208,10 @@ class InvoiceController extends Controller
                 'status' => 'cancelled',
                 'notes' => $invoice->notes . "\n[ANNULATION] Motif : " . $request->reason
             ]);
-            
-            // L'Observer s'occupera d'annuler les mouvements de stock et la compta
+            // L'InvoiceObserver gérera l'annulation
         });
 
-        return redirect()->route('invoices.index')->with('warning', 'Facture annulée.');
+        return redirect()->route('invoicesIndex')->with('warning', 'Facture annulée.');
     }
 
     /**

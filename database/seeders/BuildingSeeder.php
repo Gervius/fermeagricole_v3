@@ -13,12 +13,9 @@ class BuildingSeeder extends Seeder
      */
     public function run(): void
     {
-         $adminUser = Building::insert([[
-            'name' => 'Poulailler Principal',
-            'capacity' => 10000,
-        ], [
-            'name' => 'Poulailler Secondaire',
-            'capacity' => 5000,
-        ] ]);
+         Building::insert([
+            ['name' => 'Poulailler Principal', 'capacity' => 10000],
+            ['name' => 'Poulailler Secondaire', 'capacity' => 5000],
+        ]);
     }
 }

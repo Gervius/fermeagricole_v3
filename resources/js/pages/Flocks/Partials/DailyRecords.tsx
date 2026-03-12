@@ -18,7 +18,6 @@ interface DailyRecord {
     notes: string;
     status: RecordStatus;
     created_by: string;
-    submitted_at?: string;
     approved_by?: string;
     approved_at?: string;
     rejection_reason?: string;
@@ -139,17 +138,13 @@ export default function DailyRecords({ initialFlock, onClose, onFlockUpdate }: {
             preserveState: true,
             only: ['flash'],
             onSuccess: (page) => {
-                const updated = (page.props as PageProps).flash?.updatedRecord;
-                if (updated) {
-                    setRecords(prev =>
-                        prev.map(r => (r.id === updated.id ? { ...r, ...updated } : r))
-                    );
-                }
                 const updatedFlock = page.props.flash?.updatedFlock;
                 if (updatedFlock) {
-                    onFlockUpdate(updatedFlock); // On "remonte" l'info au parent
+                    onFlockUpdate(updatedFlock);
                 }
                 addToast({ message: 'Suivi approuvé', type: 'success' });
+                // Recharger la page courante des enregistrements
+                loadRecords(pagination.current_page);
             },
             onError: (errors) => {
                 console.log(errors);

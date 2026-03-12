@@ -9,7 +9,7 @@ use App\Observers\PaymentObserver;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 
 #[ObservedBy([PaymentObserver::class])]
-class Payments extends Model
+class Payment extends Model
 {
     protected $table = 'payments';
 

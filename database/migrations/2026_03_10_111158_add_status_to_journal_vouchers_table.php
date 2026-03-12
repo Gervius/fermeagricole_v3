@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('journal_vouchers', function (Blueprint $table) {
-            $table->enum('status', ['draft', 'posted'])->default('draft')->after('date');
+            $table->enum('status', ['draft', 'posted', 'cancelled'])->default('draft')->after('date');
             $table->string('voucher_number')->nullable()->change(); // Rendre nullable pour les brouillons
         });
     }

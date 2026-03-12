@@ -145,7 +145,7 @@ export default function JournalVouchersIndex({ vouchers, filters, flash }: Vouch
                                             </td>
                                         </tr>
                                     ) : (
-                                        vouchers.data.map(v => (
+                                        vouchers?.data?.map(v => (
                                             <tr key={v.id} className="hover:bg-stone-50 transition-colors">
                                                 <td className="px-5 py-4 font-mono text-stone-900">{v.voucher_number}</td>
                                                 <td className="px-5 py-4 whitespace-nowrap">

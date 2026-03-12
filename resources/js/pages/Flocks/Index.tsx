@@ -44,7 +44,6 @@ interface Flock extends FlockPermissions {
     current_quantity: number;
     status: FlockStatus;
     creator: string;
-    created_at: string;
     // champs présents dans show() uniquement
     notes?: string;
     approver?: string;
@@ -60,7 +59,6 @@ interface DailyRecord {
     notes: string;
     status: RecordStatus;
     created_by: string;
-    submitted_at?: string;
     approved_by?: string;
     approved_at?: string;
     rejection_reason?: string;

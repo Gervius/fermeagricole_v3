@@ -237,7 +237,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/stock-movements/export/excel', [StockMouvementController::class, 'exportExcel'])->name('stockMovements.export');
     Route::get('/journal-vouchers/export/excel', [JournalVoucherController::class, 'exportExcel'])->name('journalVouchers.export');
 
-    Route::get('/reports/balance', [ReportController::class, 'balance'])->name('reportsBalance');
+    Route::post('/invoices/{invoice}/approve', [InvoiceController::class, 'approve'])->name('invoicesApprove');
+    Route::post('/invoices/{invoice}/add-payment', [InvoiceController::class, 'addPayment'])->name('invoicesAddPayment');
+    Route::post('/invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])->name('invoicesCancel');
+
+    Route::prefix('reports')->name('reports')->group(function () {
+    Route::get('/balance', [ReportController::class, 'balance'])->name('Balance');
+    Route::get('/income-statement', [ReportController::class, 'incomeStatement'])->name('incomeStatement');
+    Route::get('/aging', [ReportController::class, 'agingReport'])->name('aging');
+    Route::get('/balance/pdf', [ReportController::class, 'downloadBalancePdf'])->name('balance.pdf');
+    Route::get('/income-statement/pdf', [ReportController::class, 'downloadIncomeStatementPdf'])->name('incomeStatement.pdf');
+    Route::get('/aging/pdf', [ReportController::class, 'downloadAgingPdf'])->name('aging.pdf');
+});
 });
 
 require __DIR__.'/settings.php';
