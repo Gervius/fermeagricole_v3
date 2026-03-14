@@ -58,7 +58,7 @@ class AccountingService
                 EggMovement::create([
                     'date' => $invoice->date,
                     'type' => 'out',
-                    'quantity' => $item->quantity, // toujours positif, le type indique la sortie
+                    'quantity' => (int) $item->quantity, // toujours positif, le type indique la sortie
                     'source_id' => $item->id,
                     'source_type' => get_class($item),
                     'created_by' => $invoice->approved_by ?? auth()->id(),
@@ -102,9 +102,17 @@ class AccountingService
     {
         $invoice = $payment->invoice;
 
+        $methodToAccount = [
+            'Espèces' => '571%',
+            'Orange Money' => '5811%',
+            'Wave' => '5812%',
+            'Virement' => '512%',
+        ];
+
         // Comptes (à adapter selon votre plan comptable)
-        $cashAccount = Account::where('code', 'like', '571%')->orWhere('code', 'like', '581%')->first();
+        $cashAccount = Account::where('code', 'like', $methodToAccount[$payment->method])->first();
         $clientAccount = Account::where('code', 'like', '411%')->first();
+        
 
         if (!$cashAccount || !$clientAccount) {
             throw new \Exception("Comptes de trésorerie ou client non configurés.");

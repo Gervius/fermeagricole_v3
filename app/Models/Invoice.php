@@ -42,9 +42,29 @@ class Invoice extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function approver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
     // Calcul du reste à payer pour l'UI
     public function getRemainingAmountAttribute(): float
     {
         return $this->total - $this->payments()->sum('amount');
+    }
+
+    public function partner(): BelongsTo
+    {
+        return $this->belongsTo(Partner::class);
+    }
+
+    public function isApproved(): bool
+    {
+        return $this->status === 'sent';
+    }
+
+    public function getCanAddPaymentAttribute(): bool
+    {
+        return $this->status !== 'cancelled' && $this->remaining_amount > 0;
     }
 }

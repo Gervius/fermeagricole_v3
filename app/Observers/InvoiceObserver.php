@@ -11,7 +11,7 @@ class InvoiceObserver
 {
     public function updated(Invoice $invoice): void
     {
-        if ($invoice->wasChanged('status') && $invoice->status === 'approved') {
+        if ($invoice->wasChanged('status') && $invoice->status === 'sent') {
             app(AccountingService::class)->createForInvoice($invoice);
         }
 

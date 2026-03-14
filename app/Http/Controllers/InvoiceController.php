@@ -11,34 +11,41 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Services\AccountingService;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class InvoiceController extends Controller
 {
+    use AuthorizesRequests;
     /**
      * Liste des factures avec filtres de paiement.
      */
+    // Dans InvoiceController@index
     public function index(Request $request)
     {
-        $query = Invoice::with(['creator'])
+        $query = Invoice::with(['creator', 'items', 'partner'])
             ->when($request->search, function ($q, $search) {
                 $q->where('number', 'like', "%{$search}%")
-                  ->orWhere('customer_name', 'like', "%{$search}%");
+                ->orWhere('customer_name', 'like', "%{$search}%");
             })
             ->when($request->payment_status, fn($q, $status) => $q->where('payment_status', $status));
 
-        // Pagination logic
         $invoices = $query->latest()->paginate(15)->through(fn($invoice) => [
             'id' => $invoice->id,
             'number' => $invoice->number,
             'customer_name' => $invoice->customer_name,
-            'date' => $invoice->date->format('d/m/Y'),
-            'due_date' => $invoice->due_date ? $invoice->due_date->format('d/m/Y') : null,
+            'customer_phone' => $invoice->partner?->phone, // si relation partner
+            'date' => $invoice->date->format('Y-m-d'),
+            'due_date' => $invoice->due_date?->format('Y-m-d'),
             'total' => $invoice->total,
-            'remaining_amount' => $invoice->remaining_amount,
+            'paid_amount' => $invoice->payments()->sum('amount'),
+            'remaining' => $invoice->total - $invoice->payments()->sum('amount'),
             'status' => $invoice->status,
             'payment_status' => $invoice->payment_status,
+            'items_count' => $invoice->items->count(),
+            'items_types' => $invoice->items->pluck('itemable_type')->map(fn($type) => 
+                str_contains($type, 'Egg') ? 'egg' : (str_contains($type, 'Flock') ? 'flock' : 'other')
+            )->unique()->values(),
             'is_overdue' => $invoice->due_date && $invoice->due_date->isPast() && $invoice->payment_status !== 'paid',
-            'created_by' => $invoice->creator->name,
         ]);
 
         return Inertia::render('Invoices/Index', [
@@ -46,15 +53,13 @@ class InvoiceController extends Controller
             'filters' => $request->only(['search', 'payment_status']),
             'stats' => [
                 'total_revenue' => Invoice::whereNotIn('status', ['draft', 'cancelled'])->sum('total'),
-                'total_collected' => Payment::sum('amount'),
-                'total_receivable' => Invoice::whereNotIn('status', ['draft', 'cancelled'])
-                                        ->get()
-                                        ->sum(fn($inv) => $inv->remaining_amount),
+                'total_collected' => \App\Models\Payment::sum('amount'),
+                'total_receivable' => Invoice::whereNotIn('status', ['draft', 'cancelled'])->get()->sum(fn($inv) => $inv->total - $inv->payments()->sum('amount')),
                 'overdue_count' => Invoice::whereNotIn('status', ['draft', 'cancelled'])
-                                        ->where('payment_status', '!=', 'paid')
-                                        ->whereNotNull('due_date')
-                                        ->where('due_date', '<', now()->startOfDay())
-                                        ->count(),
+                    ->where('payment_status', '!=', 'paid')
+                    ->whereNotNull('due_date')
+                    ->where('due_date', '<', now())
+                    ->count(),
             ]
         ]);
     }
@@ -141,10 +146,20 @@ class InvoiceController extends Controller
     public function approve(Invoice $invoice)
     {
         $this->authorize('approve', $invoice);
+
+        
         
         DB::transaction(function () use ($invoice) {
+            foreach ($invoice->items as $item) {
+                if ($item->itemable_type === Flock::class) {
+                    $flock = Flock::find($item->itemable_id);
+                    if (!$flock || !$flock->canSell($item->quantity)) {
+                        throw new \Exception("Stock insuffisant pour le lot {$flock->name}. Disponible : {$flock->calculated_quantity}, demandé : {$item->quantity}");
+                    }
+                }
+            }
             $invoice->update([
-                'status' => 'approved',
+                'status' => 'sent',
                 'approved_by' => auth()->id(),
                 'approved_at' => now(),
             ]);
@@ -157,9 +172,25 @@ class InvoiceController extends Controller
 
     public function show(Invoice $invoice)
     {
+        $invoice->load(['items', 'payments', 'creator', 'approver', 'partner']);
+        $partner = $invoice->partner;
+        $statement = $partner ? $partner->getStatement() : [];
+
         return Inertia::render('Invoices/Show', [
-            'invoice' => $invoice->load(['items', 'payments', 'creator', 'approver']),
+            'invoice' => array_merge($invoice->toArray(), [
+                'can_approve' => auth()->user()->can('approve', $invoice),
+                'can_cancel' => auth()->user()->can('cancel', $invoice),
+                'can_add_payment' => $invoice->can_add_payment,
+            ]),
             'remaining_amount' => $invoice->total - $invoice->payments()->sum('amount'),
+            'partner' => $partner ? [
+                'id' => $partner->id,
+                'name' => $partner->name,
+                'phone' => $partner->phone,
+                'email' => $partner->email,
+                'balance' => $partner->balance,
+                'statement' => $statement,
+            ] : null,
         ]);
     }
 
@@ -183,11 +214,6 @@ class InvoiceController extends Controller
                 'reference' => $validated['reference'],
                 'created_by' => auth()->id(),
             ]);
-
-            // Le PaymentObserver va mettre à jour le statut de la facture (dans la même transaction)
-
-            // Créer l'écriture comptable du paiement
-            app(AccountingService::class)->createForPayment($payment);
         });
 
         return back()->with('success', 'Paiement enregistré avec succès.');
@@ -225,4 +251,17 @@ class InvoiceController extends Controller
         
         return $pdf->download("Facture_{$invoice->number}.pdf");
     }
+
+    
+    /* public function whatsapp(Invoice $invoice)
+    {
+        $phone = $invoice->partner?->phone; // ou customer_phone si vous avez un champ
+        if (!$phone) {
+            return back()->with('error', 'Numéro de téléphone manquant.');
+        }
+        $message = "Bonjour {$invoice->customer_name}, votre facture {$invoice->number} d'un montant de " . formatCurrency($invoice->remaining) . " est due.";
+        $url = "https://wa.me/" . preg_replace('/\s+/', '', $phone) . "?text=" . urlencode($message);
+        return redirect()->away($url);
+    } */
+    
 }

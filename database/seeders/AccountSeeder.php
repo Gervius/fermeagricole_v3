@@ -25,6 +25,9 @@ class AccountSeeder extends Seeder
             ['code' => '622000', 'name' => 'Frais Vétérinaires & Soins', 'type' => 'expense'],
             ['code' => '604000', 'name' => 'Achats de cheptel (Poules)', 'type' => 'expense'],
             ['code' => '401100', 'name' => 'Fournisseurs', 'type' => 'liability'],
+            ['code' => '571000', 'name' => 'Caisse', 'type' => 'asset'],
+            ['code' => '581100', 'name' => 'Mobile Money (Orange)', 'type' => 'asset'],
+            ['code' => '581200', 'name' => 'Mobile Money (Wave)', 'type' => 'asset'],
         ];
 
         foreach ($accounts as $acc) {
