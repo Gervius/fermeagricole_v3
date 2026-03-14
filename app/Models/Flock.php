@@ -86,7 +86,7 @@ class Flock extends Model
     // Vérifier si une vente est possible
     public function canSell(int $quantity): bool
     {
-        return $this->status === 'active' && $this->current_quantity >= $quantity;
+        return $this->status === 'active' && $this->calculated_quantity >= $quantity;
     }
 
     public function approver(): BelongsTo

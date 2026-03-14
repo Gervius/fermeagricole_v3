@@ -25,7 +25,7 @@ return new class extends Migration
             $table->decimal('total', 15, 2)->default(0); // TTC
             
             // États (Workflow)
-            $table->enum('status', ['draft', 'sent', 'paid', 'partial', 'cancelled'])->default('draft');
+            $table->enum('status', ['draft', 'sent', 'cancelled'])->default('draft');
             $table->enum('payment_status', ['unpaid', 'partial', 'paid'])->default('unpaid');
             
             // Traçabilité et Approbation

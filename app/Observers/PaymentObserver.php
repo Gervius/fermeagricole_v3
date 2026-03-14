@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Models\Payment;
+use App\Services\AccountingService;
 
 class PaymentObserver
 {
@@ -51,7 +52,7 @@ class PaymentObserver
     {
         if (!$invoice) return;
 
-        $totalPaid = $invoice->Payment()->sum('amount');
+        $totalPaid = $invoice->payments()->sum('amount');
         
         if ($totalPaid >= $invoice->total) {
             $invoice->payment_status = 'paid';
