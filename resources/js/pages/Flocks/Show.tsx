@@ -155,7 +155,6 @@ export default function FlockShow() {
             addToast({ message: String(flash.success), type: 'success' });
         if (flash?.error)
             addToast({ message: String(flash.error), type: 'error' });
-
     }, []);
 
     // ── Handlers ────────────────────────────────

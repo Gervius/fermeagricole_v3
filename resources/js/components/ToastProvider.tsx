@@ -32,7 +32,6 @@ export function useToasts(): ToastContextValue {
         // Provide no-op implementations to prevent runtime errors and log a warning.
         return {
             addToast: (t) => {
-
                 console.warn(
                     '[ToastProvider] addToast called without provider. Message:',
                     t?.message,
@@ -40,7 +39,6 @@ export function useToasts(): ToastContextValue {
                 return 'noop';
             },
             removeToast: (id: string) => {
-
                 console.warn(
                     '[ToastProvider] removeToast called without provider. id:',
                     id,

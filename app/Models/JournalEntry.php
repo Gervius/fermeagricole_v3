@@ -16,6 +16,7 @@ class JournalEntry extends Model
         'debit',
         'credit',
         'description',
+        'lettering_code',
     ];
 
     protected $casts = [
