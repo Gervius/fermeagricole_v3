@@ -45,12 +45,12 @@ export default function ForgotPassword({ status }: { status?: string }) {
 
                             <div className="my-6 flex items-center justify-start">
                                 <Button
-                                    className="w-full bg-amber-500 hover:bg-amber-600 text-white"
+                                    className="w-full bg-amber-500 text-white hover:bg-amber-600"
                                     disabled={processing}
                                     data-test="email-password-reset-link-button"
                                 >
                                     {processing && (
-                                        <LoaderCircle className="h-4 w-4 animate-spin mr-2" />
+                                        <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
                                     )}
                                     Envoyer le lien de réinitialisation
                                 </Button>
@@ -61,7 +61,9 @@ export default function ForgotPassword({ status }: { status?: string }) {
 
                 <div className="space-x-1 text-center text-sm text-muted-foreground">
                     <span>Ou, retourner à la</span>
-                    <TextLink href={login()} className="text-amber-600">connexion</TextLink>
+                    <TextLink href={login()} className="text-amber-600">
+                        connexion
+                    </TextLink>
                 </div>
             </div>
         </AuthLayout>

@@ -1,14 +1,18 @@
-import React from 'react';
-import { Head, useForm, router } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
 import RecipeForm from '@/components/Recipes/RecipeForm';
-import { recipesCreate, recipesStore, recipesIndex } from '@/routes';
+import AppLayout from '@/layouts/app-layout';
+import { recipesCreate, recipesIndex, recipesStore } from '@/routes';
+import { Head, router, useForm } from '@inertiajs/react';
+import React from 'react';
 
 interface Props {
     ingredients: {
         quantity: number;
-        rawMaterialId: any; id: number; name: string; default_unit_id: number; default_unit_symbol: string 
-}[];
+        rawMaterialId: any;
+        id: number;
+        name: string;
+        default_unit_id: number;
+        default_unit_symbol: string;
+    }[];
     units: { id: number; name: string; symbol: string }[];
 }
 
@@ -23,8 +27,6 @@ export default function Create({ ingredients, units }: Props) {
         ingredients: [],
     });
 
-    
-
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         post(recipesStore.url(), {
@@ -33,11 +35,17 @@ export default function Create({ ingredients, units }: Props) {
     };
 
     return (
-        <AppLayout breadcrumbs={[{ title: 'Nouvelle recette', href: recipesCreate.url() }]}>
+        <AppLayout
+            breadcrumbs={[
+                { title: 'Nouvelle recette', href: recipesCreate.url() },
+            ]}
+        >
             <Head title="Nouvelle recette" />
-            <div className="max-w-3xl mx-auto py-8 px-4">
-                <div className="bg-white border border-stone-200 rounded-xl p-6">
-                    <h1 className="text-xl font-semibold text-stone-900 mb-6">Nouvelle recette</h1>
+            <div className="mx-auto max-w-3xl px-4 py-8">
+                <div className="rounded-xl border border-stone-200 bg-white p-6">
+                    <h1 className="mb-6 text-xl font-semibold text-stone-900">
+                        Nouvelle recette
+                    </h1>
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <RecipeForm
                             data={data}
@@ -50,14 +58,14 @@ export default function Create({ ingredients, units }: Props) {
                             <button
                                 type="button"
                                 onClick={() => router.get(recipesIndex.url())}
-                                className="flex-1 px-4 py-2 border border-stone-200 text-stone-700 text-sm rounded-lg hover:bg-stone-50 transition-colors"
+                                className="flex-1 rounded-lg border border-stone-200 px-4 py-2 text-sm text-stone-700 transition-colors hover:bg-stone-50"
                             >
                                 Annuler
                             </button>
                             <button
                                 type="submit"
                                 disabled={processing}
-                                className="flex-1 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm rounded-lg transition-colors disabled:opacity-40"
+                                className="flex-1 rounded-lg bg-amber-500 px-4 py-2 text-sm text-white transition-colors hover:bg-amber-600 disabled:opacity-40"
                             >
                                 Créer la recette
                             </button>

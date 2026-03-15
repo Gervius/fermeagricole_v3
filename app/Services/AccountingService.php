@@ -43,13 +43,26 @@ class AccountingService
             'description' => "Créance Client - " . $invoice->customer_name,
         ]);
 
-        // Crédit vente
+        // Crédit vente (HT)
         $voucher->entries()->create([
             'account_id' => $salesAccount->id,
             'debit' => 0,
-            'credit' => $invoice->total,
-            'description' => "Vente - Facture n° " . $invoice->number,
+            'credit' => $invoice->subtotal,
+            'description' => "Vente HT - Facture n° " . $invoice->number,
         ]);
+
+        // Crédit TVA (si applicable)
+        if ($invoice->tax_amount > 0) {
+            $vatAccount = Account::where('code', 'like', '443%')->first()
+                ?? Account::firstOrCreate(['code' => '443100'], ['name' => 'TVA facturée', 'type' => 'liability']);
+
+            $voucher->entries()->create([
+                'account_id' => $vatAccount->id,
+                'debit' => 0,
+                'credit' => $invoice->tax_amount,
+                'description' => "TVA facturée - Facture n° " . $invoice->number,
+            ]);
+        }
 
         // Gérer les mouvements de stock pour les articles
         foreach ($invoice->items as $item) {
@@ -153,14 +166,38 @@ class AccountingService
         // Trouver le voucher associé (s'il existe)
         $voucher = JournalVoucher::where('source_id', $invoice->id)
             ->where('source_type', Invoice::class)
+            ->where('status', '!=', 'cancelled')
             ->first();
 
         if ($voucher) {
-            // Option 1 : Marquer le voucher comme annulé
-            $voucher->update(['status' => 'cancelled']); // à ajouter dans la migration si besoin
+            if ($voucher->status === 'draft') {
+                // Si c'est un brouillon, on peut simplement l'annuler/le supprimer
+                $voucher->update(['status' => 'cancelled']);
+            } else {
+                // S'il est posté, on crée une contre-passation (Syscohada)
+                $reversingVoucher = JournalVoucher::create([
+                    'voucher_number' => JournalVoucher::generateVoucherNumber(),
+                    'status' => 'posted', // Ou draft si nécessite validation
+                    'date' => now(),
+                    'description' => "Contre-passation - Annulation Facture n° " . $invoice->number,
+                    'source_id' => $invoice->id,
+                    'source_type' => Invoice::class,
+                    'created_by' => auth()->id(),
+                ]);
 
-            // Option 2 : Créer des écritures inverses
-            // ...
+                // Inverser les écritures (débits deviennent crédits, etc.)
+                foreach ($voucher->entries as $entry) {
+                    $reversingVoucher->entries()->create([
+                        'account_id' => $entry->account_id,
+                        'debit' => $entry->credit,  // Inversion
+                        'credit' => $entry->debit,  // Inversion
+                        'description' => "Annulation: " . $entry->description,
+                    ]);
+                }
+
+                // Marquer l'original comme annulé pour ne pas le re-traiter
+                $voucher->update(['status' => 'cancelled']);
+            }
         }
 
         // Inverser les mouvements de stock

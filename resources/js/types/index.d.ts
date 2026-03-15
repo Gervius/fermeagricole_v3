@@ -51,62 +51,61 @@ export type FlockStatus = 'draft' | 'pending' | 'active' | 'rejected';
 export type DailyRecordStatus = 'pending' | 'approved' | 'rejected';
 
 export interface Flock {
-  id: number;
-  name: string;
-  building_id: number;
-  building_name: string;
-  arrival_date: string; // format YYYY-MM-DD
-  initial_quantity: number;
-  current_quantity: number;
-  status: FlockStatus;
-  notes: string | null;
-  created_by: number;
-  creator_name: string;
-  approved_by: number | null;
-  approver_name: string | null;
-  approved_at: string | null;
-  // permissions calculées côté backend et passées en props
-  can_edit: boolean;
-  can_delete: boolean;
-  can_submit: boolean;
-  can_approve: boolean;
-  can_reject: boolean;
+    id: number;
+    name: string;
+    building_id: number;
+    building_name: string;
+    arrival_date: string; // format YYYY-MM-DD
+    initial_quantity: number;
+    current_quantity: number;
+    status: FlockStatus;
+    notes: string | null;
+    created_by: number;
+    creator_name: string;
+    approved_by: number | null;
+    approver_name: string | null;
+    approved_at: string | null;
+    // permissions calculées côté backend et passées en props
+    can_edit: boolean;
+    can_delete: boolean;
+    can_submit: boolean;
+    can_approve: boolean;
+    can_reject: boolean;
 }
 
 export interface Building {
-  id: number;
-  name: string;
-  description: string | null;
-  capacity: number | null;
+    id: number;
+    name: string;
+    description: string | null;
+    capacity: number | null;
 }
 
 export interface DailyRecord {
-  id: number;
-  flock_id: number;
-  date: string; // YYYY-MM-DD
-  losses: number;
-  eggs: number;
-  notes: string | null;
-  status: DailyRecordStatus;
-  created_by: number;
-  creator_name: string;
-  approved_by: number | null;
-  approver_name: string | null;
-  approved_at: string | null;
-  rejection_reason: string | null;
-  // permissions
-  can_approve: boolean;
-  can_reject: boolean;
+    id: number;
+    flock_id: number;
+    date: string; // YYYY-MM-DD
+    losses: number;
+    eggs: number;
+    notes: string | null;
+    status: DailyRecordStatus;
+    created_by: number;
+    creator_name: string;
+    approved_by: number | null;
+    approver_name: string | null;
+    approved_at: string | null;
+    rejection_reason: string | null;
+    // permissions
+    can_approve: boolean;
+    can_reject: boolean;
 }
 
 export interface User {
-  id: number;
-  name: string;
-  email: string;
-  roles: string[];
-  permissions: string[];
+    id: number;
+    name: string;
+    email: string;
+    roles: string[];
+    permissions: string[];
 }
-
 
 interface User {
     id: number;

@@ -61,21 +61,26 @@ class FeedProductionObserver
             ]
         );
 
-        // Créer le mouvement d'entrée pour l'aliment produit
-        StockMouvement::create([
+        // Calcul du prix de revient unitaire
+        $feedUnitPrice = $production->quantity_produced > 0 ? $totalCost / $production->quantity_produced : 0;
+
+        // Créer le mouvement d'entrée pour l'aliment produit (en 'pending' d'abord pour l'observer)
+        $feedMovement = StockMouvement::create([
             'ingredient_id' => $feedIngredient->id,
             'type' => 'in',
-            'quantity' => $feedProduction->quantity_produced,
-            'unit_id' => $feedProduction->unit_id,
+            'quantity' => $production->quantity_produced,
+            'unit_id' => $production->unit_id,
             'unit_price' => $feedUnitPrice,
             'reason' => "Production aliment: {$recipe->name}",
-            'status' => 'approved',
-            'created_by' => $feedProduction->approved_by ?? auth()->id(),
-            'approved_by' => $feedProduction->approved_by,
-            'approved_at' => now(),
+            'status' => 'pending',
+            'created_by' => $production->approved_by ?? auth()->id(),
         ]);
 
-            // Mise à jour du stock de l'aliment sera faite par l'observateur du mouvement
+        // Approuver pour déclencher la mise à jour du stock via StockMouvementObserver
+        $feedMovement->status = 'approved';
+        $feedMovement->approved_by = $production->approved_by;
+        $feedMovement->approved_at = now();
+        $feedMovement->save();
         
     }
 }

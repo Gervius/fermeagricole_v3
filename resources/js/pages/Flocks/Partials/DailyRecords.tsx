@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { router, useForm, usePage } from '@inertiajs/react';
 import { useToasts } from '@/components/ToastProvider';
+import { suivieApprove, suivieReject, suivieStore } from '@/routes';
+import { router, useForm, usePage } from '@inertiajs/react';
 import {
-    Plus, CheckCircle, XCircle,
-    ChevronLeft, ChevronRight
+    CheckCircle,
+    ChevronLeft,
+    ChevronRight,
+    Plus,
+    XCircle,
 } from 'lucide-react';
-import { suivieStore, suivieApprove, suivieReject, flocksDailyRecords } from '@/routes';
-
+import React, { useEffect, useState } from 'react';
 
 type RecordStatus = 'pending' | 'approved' | 'rejected';
 interface DailyRecord {
@@ -24,12 +26,15 @@ interface DailyRecord {
     can_approve?: boolean;
     can_reject?: boolean;
 }
-interface Flock { id: number; name: string; }
+interface Flock {
+    id: number;
+    name: string;
+}
 
 interface DailyRecordProps {
     initialFlock?: Flock;
     onClose: () => void;
-    onFlockUpdate: (data: { id: number, current_quantity: number }) => void;
+    onFlockUpdate: (data: { id: number; current_quantity: number }) => void;
 }
 
 interface PaginatedRecords {
@@ -48,20 +53,35 @@ interface PageProps {
         error?: string;
     };
 }
-const RECORD_STATUS_META: Record<RecordStatus, { label: string; classes: string }> = {
-    pending:  { label: 'En attente', classes: 'bg-amber-100 text-amber-700' },
-    approved: { label: 'Approuvé',   classes: 'bg-emerald-100 text-emerald-700' },
-    rejected: { label: 'Rejeté',     classes: 'bg-red-100 text-red-600' },
+const RECORD_STATUS_META: Record<
+    RecordStatus,
+    { label: string; classes: string }
+> = {
+    pending: { label: 'En attente', classes: 'bg-amber-100 text-amber-700' },
+    approved: { label: 'Approuvé', classes: 'bg-emerald-100 text-emerald-700' },
+    rejected: { label: 'Rejeté', classes: 'bg-red-100 text-red-600' },
 };
 
-export default function DailyRecords({ initialFlock, onClose, onFlockUpdate }: { initialFlock?: Flock, onClose: () => void, onFlockUpdate: (data: { id: number, current_quantity: number }) => void  }) {
+export default function DailyRecords({
+    initialFlock,
+    onClose,
+    onFlockUpdate,
+}: {
+    initialFlock?: Flock;
+    onClose: () => void;
+    onFlockUpdate: (data: { id: number; current_quantity: number }) => void;
+}) {
     const { props } = usePage<PageProps>(); // on garde pour les autres usages si besoin, mais on n'y fait pas directement dans onSuccess
     const flock = initialFlock;
     const { addToast } = useToasts();
 
     // État local
     const [records, setRecords] = useState<DailyRecord[]>([]);
-    const [pagination, setPagination] = useState({ current_page: 1, last_page: 1, total: 0 });
+    const [pagination, setPagination] = useState({
+        current_page: 1,
+        last_page: 1,
+        total: 0,
+    });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showDailyForm, setShowDailyForm] = useState(false);
@@ -70,7 +90,7 @@ export default function DailyRecords({ initialFlock, onClose, onFlockUpdate }: {
         date: new Date().toISOString().split('T')[0],
         losses: '',
         eggs: '',
-        notes: ''
+        notes: '',
     });
     const [rejectingId, setRejectingId] = useState<number | null>(null);
     const [rejectionReason, setRejectionReason] = useState('');
@@ -119,77 +139,114 @@ export default function DailyRecords({ initialFlock, onClose, onFlockUpdate }: {
             onSuccess: (page) => {
                 const newRecord = (page.props as PageProps).flash?.newRecord;
                 if (newRecord) {
-                    setRecords(prev => [newRecord, ...prev]);
-                    setPagination(prev => ({ ...prev, total: prev.total + 1 }));
+                    setRecords((prev) => [newRecord, ...prev]);
+                    setPagination((prev) => ({
+                        ...prev,
+                        total: prev.total + 1,
+                    }));
                 }
                 setShowDailyForm(false);
-                setData({ flock_id: flock?.id ?? null, date: new Date().toISOString().split('T')[0], losses: '', eggs: '', notes: '' });
-                addToast({ message: 'Suivi créé avec succès', type: 'success' });
+                setData({
+                    flock_id: flock?.id ?? null,
+                    date: new Date().toISOString().split('T')[0],
+                    losses: '',
+                    eggs: '',
+                    notes: '',
+                });
+                addToast({
+                    message: 'Suivi créé avec succès',
+                    type: 'success',
+                });
             },
             onError: (errors) => {
                 console.log(errors);
-                addToast({ message: 'Veuillez vérifier le formulaire', type: 'error' });
+                addToast({
+                    message: 'Veuillez vérifier le formulaire',
+                    type: 'error',
+                });
             },
         });
     };
 
     const handleApprove = (recordId: number) => {
-        router.post(suivieApprove.url(recordId), {}, {
-            preserveState: true,
-            only: ['flash'],
-            onSuccess: (page) => {
-                const updatedFlock = page.props.flash?.updatedFlock;
-                if (updatedFlock) {
-                    onFlockUpdate(updatedFlock);
-                }
-                addToast({ message: 'Suivi approuvé', type: 'success' });
-                // Recharger la page courante des enregistrements
-                loadRecords(pagination.current_page);
+        router.post(
+            suivieApprove.url(recordId),
+            {},
+            {
+                preserveState: true,
+                only: ['flash'],
+                onSuccess: (page) => {
+                    const updatedFlock = page.props.flash?.updatedFlock;
+                    if (updatedFlock) {
+                        onFlockUpdate(updatedFlock);
+                    }
+                    addToast({ message: 'Suivi approuvé', type: 'success' });
+                    // Recharger la page courante des enregistrements
+                    loadRecords(pagination.current_page);
+                },
+                onError: (errors) => {
+                    console.log(errors);
+                    addToast({
+                        message: "Erreur lors de l'approbation",
+                        type: 'error',
+                    });
+                },
             },
-            onError: (errors) => {
-                console.log(errors);
-                addToast({ message: 'Erreur lors de l\'approbation', type: 'error' });
-            },
-        });
+        );
     };
 
     const handleReject = (recordId: number) => {
         if (!rejectionReason.trim()) return;
-        router.post(suivieReject.url(recordId), { reason: rejectionReason }, {
-            preserveState: true,
-            only: ['flash'],
-            onSuccess: (page) => {
-                const updated = (page.props as PageProps).flash?.updatedRecord;
-                if (updated) {
-                    setRecords(prev =>
-                        prev.map(r => (r.id === updated.id ? { ...r, ...updated } : r))
-                    );
-                }
-                setRejectingId(null);
-                setRejectionReason('');
-                addToast({ message: 'Suivi rejeté', type: 'success' });
+        router.post(
+            suivieReject.url(recordId),
+            { reason: rejectionReason },
+            {
+                preserveState: true,
+                only: ['flash'],
+                onSuccess: (page) => {
+                    const updated = (page.props as PageProps).flash
+                        ?.updatedRecord;
+                    if (updated) {
+                        setRecords((prev) =>
+                            prev.map((r) =>
+                                r.id === updated.id ? { ...r, ...updated } : r,
+                            ),
+                        );
+                    }
+                    setRejectingId(null);
+                    setRejectionReason('');
+                    addToast({ message: 'Suivi rejeté', type: 'success' });
+                },
+                onError: (errors) => {
+                    console.log(errors);
+                    addToast({
+                        message: 'Erreur lors du rejet',
+                        type: 'error',
+                    });
+                },
             },
-            onError: (errors) => {
-                console.log(errors);
-                addToast({ message: 'Erreur lors du rejet', type: 'error' });
-            },
-        });
+        );
     };
 
     const goToPage = (page: number) => loadRecords(page);
 
     // Stats (inchangé)
-    const approvedRecords = records.filter(r => r.status === 'approved');
+    const approvedRecords = records.filter((r) => r.status === 'approved');
     const stats = {
         totalLosses: approvedRecords.reduce((s, r) => s + r.losses, 0),
-        avgEggs: approvedRecords.length ? Math.round(approvedRecords.reduce((s, r) => s + r.eggs, 0) / approvedRecords.length) : 0,
+        avgEggs: approvedRecords.length
+            ? Math.round(
+                  approvedRecords.reduce((s, r) => s + r.eggs, 0) /
+                      approvedRecords.length,
+              )
+            : 0,
         count: approvedRecords.length,
     };
 
     return (
         <div className="space-y-6">
             {error && (
-                <div className="px-4 py-2 text-sm bg-red-50 text-red-700 border border-red-100 rounded">
+                <div className="rounded border border-red-100 bg-red-50 px-4 py-2 text-sm text-red-700">
                     {error}
                 </div>
             )}
@@ -197,19 +254,29 @@ export default function DailyRecords({ initialFlock, onClose, onFlockUpdate }: {
             <div>
                 <button
                     onClick={() => setShowDailyForm(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm rounded-lg transition-colors"
+                    className="flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm text-white transition-colors hover:bg-amber-600"
                 >
-                    <Plus className="w-4 h-4" /> Nouveau suivi
+                    <Plus className="h-4 w-4" /> Nouveau suivi
                 </button>
             </div>
 
             {/* Tableau */}
             <div className="overflow-x-auto rounded-lg border border-stone-200">
                 <table className="w-full text-sm">
-                    <thead className="bg-stone-50 border-b border-stone-200">
+                    <thead className="border-b border-stone-200 bg-stone-50">
                         <tr>
-                            {['Date', 'Pertes', 'Œufs', 'Notes', 'Statut', 'Actions'].map(h => (
-                                <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-stone-500 uppercase tracking-wide">
+                            {[
+                                'Date',
+                                'Pertes',
+                                'Œufs',
+                                'Notes',
+                                'Statut',
+                                'Actions',
+                            ].map((h) => (
+                                <th
+                                    key={h}
+                                    className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-stone-500 uppercase"
+                                >
                                     {h}
                                 </th>
                             ))}
@@ -218,30 +285,45 @@ export default function DailyRecords({ initialFlock, onClose, onFlockUpdate }: {
                     <tbody className="divide-y divide-stone-100">
                         {records.length === 0 && !loading && (
                             <tr>
-                                <td colSpan={6} className="px-4 py-8 text-center text-stone-400 text-sm">
+                                <td
+                                    colSpan={6}
+                                    className="px-4 py-8 text-center text-sm text-stone-400"
+                                >
                                     Aucun enregistrement.
                                 </td>
                             </tr>
                         )}
-                        {records.map(record => {
+                        {records.map((record) => {
                             const rsm = RECORD_STATUS_META[record.status];
                             return (
-                                <tr key={record.id} className="hover:bg-stone-50">
+                                <tr
+                                    key={record.id}
+                                    className="hover:bg-stone-50"
+                                >
                                     <td className="px-4 py-3 text-stone-700">
-                                        {new Date(record.date).toLocaleDateString('fr-FR')}
+                                        {new Date(
+                                            record.date,
+                                        ).toLocaleDateString('fr-FR')}
                                     </td>
-                                    <td className="px-4 py-3 text-stone-700">{record.losses}</td>
-                                    <td className="px-4 py-3 text-stone-700">{record.eggs.toLocaleString('fr-FR')}</td>
-                                    <td className="px-4 py-3 text-stone-500 text-xs">
+                                    <td className="px-4 py-3 text-stone-700">
+                                        {record.losses}
+                                    </td>
+                                    <td className="px-4 py-3 text-stone-700">
+                                        {record.eggs.toLocaleString('fr-FR')}
+                                    </td>
+                                    <td className="px-4 py-3 text-xs text-stone-500">
                                         {record.notes || '—'}
                                         {record.rejection_reason && (
-                                            <div className="text-red-600 mt-1 font-medium">
-                                                Motif : {record.rejection_reason}
+                                            <div className="mt-1 font-medium text-red-600">
+                                                Motif :{' '}
+                                                {record.rejection_reason}
                                             </div>
                                         )}
                                     </td>
                                     <td className="px-4 py-3">
-                                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${rsm.classes}`}>
+                                        <span
+                                            className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${rsm.classes}`}
+                                        >
                                             {rsm.label}
                                         </span>
                                     </td>
@@ -250,15 +332,25 @@ export default function DailyRecords({ initialFlock, onClose, onFlockUpdate }: {
                                             <RecordApprovalButtons
                                                 record={record}
                                                 rejectingId={rejectingId}
-                                                rejectionReason={rejectionReason}
-                                                onApprove={() => handleApprove(record.id)}
-                                                onRejectStart={() => setRejectingId(record.id)}
+                                                rejectionReason={
+                                                    rejectionReason
+                                                }
+                                                onApprove={() =>
+                                                    handleApprove(record.id)
+                                                }
+                                                onRejectStart={() =>
+                                                    setRejectingId(record.id)
+                                                }
                                                 onRejectCancel={() => {
                                                     setRejectingId(null);
                                                     setRejectionReason('');
                                                 }}
-                                                onRejectSubmit={() => handleReject(record.id)}
-                                                onReasonChange={setRejectionReason}
+                                                onRejectSubmit={() =>
+                                                    handleReject(record.id)
+                                                }
+                                                onReasonChange={
+                                                    setRejectionReason
+                                                }
                                             />
                                         )}
                                     </td>
@@ -271,22 +363,31 @@ export default function DailyRecords({ initialFlock, onClose, onFlockUpdate }: {
 
             {/* Pagination */}
             {pagination.last_page > 1 && (
-                <div className="border-t border-stone-100 px-5 py-4 flex items-center justify-between text-sm text-stone-500 bg-white rounded-b-lg">
-                    <span>Page {pagination.current_page} sur {pagination.last_page} — {pagination.total} résultats</span>
+                <div className="flex items-center justify-between rounded-b-lg border-t border-stone-100 bg-white px-5 py-4 text-sm text-stone-500">
+                    <span>
+                        Page {pagination.current_page} sur{' '}
+                        {pagination.last_page} — {pagination.total} résultats
+                    </span>
                     <div className="flex gap-1">
                         <button
                             disabled={pagination.current_page === 1}
-                            onClick={() => goToPage(pagination.current_page - 1)}
-                            className="p-1.5 rounded hover:bg-stone-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                            onClick={() =>
+                                goToPage(pagination.current_page - 1)
+                            }
+                            className="rounded p-1.5 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-30"
                         >
-                            <ChevronLeft className="w-4 h-4" />
+                            <ChevronLeft className="h-4 w-4" />
                         </button>
                         <button
-                            disabled={pagination.current_page === pagination.last_page}
-                            onClick={() => goToPage(pagination.current_page + 1)}
-                            className="p-1.5 rounded hover:bg-stone-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                            disabled={
+                                pagination.current_page === pagination.last_page
+                            }
+                            onClick={() =>
+                                goToPage(pagination.current_page + 1)
+                            }
+                            className="rounded p-1.5 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-30"
                         >
-                            <ChevronRight className="w-4 h-4" />
+                            <ChevronRight className="h-4 w-4" />
                         </button>
                     </div>
                 </div>
@@ -295,22 +396,31 @@ export default function DailyRecords({ initialFlock, onClose, onFlockUpdate }: {
             {/* Stats */}
             <div className="grid grid-cols-3 gap-4">
                 <StatCard label="Total pertes" value={stats.totalLosses} />
-                <StatCard label="Moy. œufs/jour" value={stats.avgEggs.toLocaleString('fr-FR')} />
+                <StatCard
+                    label="Moy. œufs/jour"
+                    value={stats.avgEggs.toLocaleString('fr-FR')}
+                />
                 <StatCard label="Saisies approuvées" value={stats.count} />
             </div>
 
             {/* Modal de création */}
             {showDailyForm && flock && (
-                <Modal title={`Nouveau suivi — ${flock.name}`} onClose={() => setShowDailyForm(false)}>
-                    <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-4 text-sm text-amber-800">
-                        Les données seront appliquées uniquement après validation du responsable.
+                <Modal
+                    title={`Nouveau suivi — ${flock.name}`}
+                    onClose={() => setShowDailyForm(false)}
+                >
+                    <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                        Les données seront appliquées uniquement après
+                        validation du responsable.
                     </div>
                     <form onSubmit={handleDailySubmit} className="space-y-4">
                         <Field label="Date">
                             <input
                                 type="date"
                                 value={data.date}
-                                onChange={e => setData({ ...data, date: e.target.value })}
+                                onChange={(e) =>
+                                    setData({ ...data, date: e.target.value })
+                                }
                                 required
                                 className={inputClass}
                             />
@@ -320,7 +430,9 @@ export default function DailyRecords({ initialFlock, onClose, onFlockUpdate }: {
                                 type="number"
                                 value={data.losses}
                                 min="0"
-                                onChange={e => setData({ ...data, losses: e.target.value })}
+                                onChange={(e) =>
+                                    setData({ ...data, losses: e.target.value })
+                                }
                                 placeholder="0"
                                 required
                                 className={inputClass}
@@ -331,7 +443,9 @@ export default function DailyRecords({ initialFlock, onClose, onFlockUpdate }: {
                                 type="number"
                                 value={data.eggs}
                                 min="0"
-                                onChange={e => setData({ ...data, eggs: e.target.value })}
+                                onChange={(e) =>
+                                    setData({ ...data, eggs: e.target.value })
+                                }
                                 placeholder="0"
                                 required
                                 className={inputClass}
@@ -341,7 +455,9 @@ export default function DailyRecords({ initialFlock, onClose, onFlockUpdate }: {
                             <textarea
                                 value={data.notes}
                                 rows={2}
-                                onChange={e => setData({ ...data, notes: e.target.value })}
+                                onChange={(e) =>
+                                    setData({ ...data, notes: e.target.value })
+                                }
                                 placeholder="Observations..."
                                 className={`${inputClass} resize-none`}
                             />
@@ -374,15 +490,17 @@ function Modal({
     children: React.ReactNode;
 }) {
     return (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-                <div className="flex items-center justify-between px-7 py-5 border-b border-stone-100">
-                    <h2 className="text-base font-semibold text-stone-900">{title}</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+            <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white shadow-2xl">
+                <div className="flex items-center justify-between border-b border-stone-100 px-7 py-5">
+                    <h2 className="text-base font-semibold text-stone-900">
+                        {title}
+                    </h2>
                     <button
                         onClick={onClose}
-                        className="text-stone-400 hover:text-stone-600 transition-colors"
+                        className="text-stone-400 transition-colors hover:text-stone-600"
                     >
-                        <XCircle className="w-5 h-5" />
+                        <XCircle className="h-5 w-5" />
                     </button>
                 </div>
                 <div className="px-7 py-6">{children}</div>
@@ -391,10 +509,18 @@ function Modal({
     );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+    label,
+    children,
+}: {
+    label: string;
+    children: React.ReactNode;
+}) {
     return (
         <div>
-            <label className="block text-xs font-medium text-stone-600 mb-1.5">{label}</label>
+            <label className="mb-1.5 block text-xs font-medium text-stone-600">
+                {label}
+            </label>
             {children}
         </div>
     );
@@ -402,8 +528,8 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function StatCard({ label, value }: { label: string; value: string | number }) {
     return (
-        <div className="bg-stone-50 border border-stone-200 rounded-xl p-4">
-            <div className="text-xs text-stone-500 mb-1">{label}</div>
+        <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+            <div className="mb-1 text-xs text-stone-500">{label}</div>
             <div className="text-xl font-semibold text-stone-900">{value}</div>
         </div>
     );
@@ -423,13 +549,13 @@ function ModalFooter({
             <button
                 type="button"
                 onClick={onCancel}
-                className="flex-1 px-4 py-2 border border-stone-200 text-stone-700 text-sm rounded-lg hover:bg-stone-50 transition-colors"
+                className="flex-1 rounded-lg border border-stone-200 px-4 py-2 text-sm text-stone-700 transition-colors hover:bg-stone-50"
             >
                 Annuler
             </button>
             <button
                 type="submit"
-                className={`flex-1 px-4 py-2 text-sm rounded-lg font-medium transition-colors ${submitClass}`}
+                className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${submitClass}`}
             >
                 {submitLabel}
             </button>
@@ -472,27 +598,44 @@ function RecordApprovalButtons({
                 <input
                     type="text"
                     value={rejectionReason}
-                    onChange={e => onReasonChange(e.target.value)}
+                    onChange={(e) => onReasonChange(e.target.value)}
                     placeholder="Motif..."
-                    className="border border-stone-200 rounded px-2 py-1 text-xs w-28 focus:outline-none focus:ring-1 focus:ring-amber-400"
+                    className="w-28 rounded border border-stone-200 px-2 py-1 text-xs focus:ring-1 focus:ring-amber-400 focus:outline-none"
                 />
                 <button
                     onClick={onRejectSubmit}
                     disabled={!rejectionReason.trim() || isRejectingLoading}
-                    className="px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="flex items-center gap-2 rounded bg-red-500 px-2 py-1 text-xs text-white hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                     {isRejectingLoading ? (
-                        <svg className="w-3 h-3 animate-spin text-white" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                        <svg
+                            className="h-3 w-3 animate-spin text-white"
+                            viewBox="0 0 24 24"
+                        >
+                            <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                                fill="none"
+                            ></circle>
+                            <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                            ></path>
                         </svg>
-                    ) : 'OK'}
+                    ) : (
+                        'OK'
+                    )}
                 </button>
                 <button
                     onClick={onRejectCancel}
                     className="text-stone-400 hover:text-stone-600"
                 >
-                    <XCircle className="w-4 h-4" />
+                    <XCircle className="h-4 w-4" />
                 </button>
             </div>
         );
@@ -505,15 +648,30 @@ function RecordApprovalButtons({
                     onClick={onApprove}
                     title="Approuver"
                     disabled={isApprovingLoading}
-                    className={`p-1 text-emerald-600 hover:bg-emerald-50 rounded transition-colors ${isApprovingLoading ? 'opacity-60 cursor-wait' : ''}`}
+                    className={`rounded p-1 text-emerald-600 transition-colors hover:bg-emerald-50 ${isApprovingLoading ? 'cursor-wait opacity-60' : ''}`}
                 >
                     {isApprovingLoading ? (
-                        <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                        <svg
+                            className="h-4 w-4 animate-spin"
+                            viewBox="0 0 24 24"
+                        >
+                            <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                                fill="none"
+                            ></circle>
+                            <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                            ></path>
                         </svg>
                     ) : (
-                        <CheckCircle className="w-4 h-4" />
+                        <CheckCircle className="h-4 w-4" />
                     )}
                 </button>
             )}
@@ -521,9 +679,9 @@ function RecordApprovalButtons({
                 <button
                     onClick={onRejectStart}
                     title="Rejeter"
-                    className="p-1 text-red-500 hover:bg-red-50 rounded transition-colors"
+                    className="rounded p-1 text-red-500 transition-colors hover:bg-red-50"
                 >
-                    <XCircle className="w-4 h-4" />
+                    <XCircle className="h-4 w-4" />
                 </button>
             )}
         </div>
