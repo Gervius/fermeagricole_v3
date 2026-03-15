@@ -14,6 +14,7 @@ use App\Http\Requests\RejectFeedProductionRequest;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\DB;
 
 class FeedProductionController extends Controller
 {
@@ -105,7 +106,7 @@ class FeedProductionController extends Controller
     {
         $this->authorize('update', $feedProduction);
 
-        $recipes = Recipe::with('ingredients.ingredient', 'unit')->get();
+        $recipes = Recipe::with('ingredients', 'unit')->get();
         $units = Unit::all();
         return Inertia::render('FeedProductions/Edit', [
             'production' => $feedProduction,
