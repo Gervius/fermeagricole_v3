@@ -236,7 +236,7 @@ export default function FlockManagement({
                 .join(' ');
             addToast({ message: msg, type: 'error' });
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+
     }, []);
 
     // Recherche / filtres locaux (soumis via Inertia GET)

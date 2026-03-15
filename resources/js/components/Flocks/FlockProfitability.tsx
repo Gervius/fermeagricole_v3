@@ -44,52 +44,31 @@ export default function FlockProfitability({ data }: Props) {
     const { kpis, costs, revenues, waterfall_data } = data;
 
     // Préparation des données du Waterfall pour Recharts
-    let runningTotal = 0;
-    const chartData = waterfall_data.map((item, index) => {
+    const chartData = [];
+    let currentTotal = 0;
+    for (const item of waterfall_data) {
         if (item.isTotal) {
-            return {
+            chartData.push({
                 name: item.name,
                 transparent: 0,
                 val: item.amount,
                 fill: item.amount >= 0 ? '#10b981' : '#ef4444', // Vert ou Rouge
-            };
+            });
+            continue;
         }
 
-        const previousTotal = runningTotal;
-        runningTotal += item.amount;
+        const previousTotal = currentTotal;
+        currentTotal += item.amount;
 
-        return {
+        chartData.push({
             name: item.name,
-            transparent: item.amount < 0 ? runningTotal : previousTotal,
+            transparent: item.amount < 0 ? currentTotal : previousTotal,
             val: Math.abs(item.amount),
             fill: item.amount < 0 ? '#ef4444' : '#10b981', // Dépenses = Rouge, Entrées = Vert
             isExpense: item.amount < 0,
             originalAmount: item.amount,
-        };
-    });
-
-    const CustomTooltip = ({ active, payload, label }: any) => {
-        if (active && payload && payload.length) {
-            const data = payload[0].payload;
-            const value =
-                data.isTotal !== undefined ? data.val : data.originalAmount;
-            return (
-                <div className="rounded-lg border border-stone-200 bg-white p-3 text-sm shadow-lg">
-                    <p className="mb-1 font-semibold text-stone-900">{label}</p>
-                    <p
-                        className={
-                            value >= 0
-                                ? 'font-bold text-emerald-600'
-                                : 'font-bold text-red-600'
-                        }
-                    >
-                        {formatCurrency(value)}
-                    </p>
-                </div>
-            );
-        }
-        return null;
-    };
+        });
+    }
 
     return (
         <div className="space-y-6">
@@ -263,7 +242,28 @@ export default function FlockProfitability({ data }: Props) {
                                     tickFormatter={(val) => `${val / 1000}k`}
                                 />
                                 <Tooltip
-                                    content={<CustomTooltip />}
+                                    content={(props: any) => {
+                                        const { active, payload, label } = props;
+                                        if (active && payload && payload.length) {
+                                            const data = payload[0].payload;
+                                            const value = data.isTotal !== undefined ? data.val : data.originalAmount;
+                                            return (
+                                                <div className="rounded-lg border border-stone-200 bg-white p-3 text-sm shadow-lg">
+                                                    <p className="mb-1 font-semibold text-stone-900">{label}</p>
+                                                    <p
+                                                        className={
+                                                            value >= 0
+                                                                ? 'font-bold text-emerald-600'
+                                                                : 'font-bold text-red-600'
+                                                        }
+                                                    >
+                                                        {formatCurrency(value)}
+                                                    </p>
+                                                </div>
+                                            );
+                                        }
+                                        return null;
+                                    }}
                                     cursor={{ fill: 'transparent' }}
                                 />
 
