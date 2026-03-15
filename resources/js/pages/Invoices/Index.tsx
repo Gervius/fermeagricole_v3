@@ -33,6 +33,7 @@ type PaymentStatus = 'unpaid' | 'partial' | 'paid';
 
 interface Invoice {
     id: number;
+    type: 'sale' | 'purchase';
     number: string;
     customer_name: string;
     customer_phone?: string;
@@ -305,9 +306,19 @@ export default function InvoicesIndex({
                                                     )}
                                                 </div>
                                                 <div>
-                                                    <h3 className="text-base font-semibold text-stone-900">
-                                                        {invoice.number}
-                                                    </h3>
+                                                    <div className="flex items-center gap-2">
+                                                        <h3 className="text-base font-semibold text-stone-900">
+                                                            {invoice.number}
+                                                        </h3>
+                                                        <span
+                                                            className={`rounded-md px-2 py-0.5 text-[10px] font-medium ${invoice.type === 'purchase' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}
+                                                        >
+                                                            {invoice.type ===
+                                                            'purchase'
+                                                                ? 'Achat'
+                                                                : 'Vente'}
+                                                        </span>
+                                                    </div>
                                                     <p className="text-sm text-stone-500">
                                                         {invoice.customer_name}
                                                     </p>
