@@ -56,6 +56,7 @@ class FeedProductionObserver
                 'reference' => 'FEED-' . $recipe->id,
                 'default_unit_id' => $recipe->unit_id,
                 'current_stock' => 0,
+                'low_stock_threshold' => 0,
                 'pmp' => 0,
                 'is_active' => true,
             ]
