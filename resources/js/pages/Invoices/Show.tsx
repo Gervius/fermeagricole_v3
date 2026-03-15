@@ -46,6 +46,7 @@ interface Payment {
 interface Invoice {
     can_add_payment: import('react/jsx-runtime').JSX.Element;
     id: number;
+    type: 'sale' | 'purchase';
     number: string;
     customer_name: string;
     customer_phone?: string;
@@ -245,7 +246,10 @@ export default function InvoiceShow({ invoice, partner, flash }: Props) {
                                     onClick={() => setActiveTab('statement')}
                                     className={`relative pb-2 text-sm font-medium transition-colors ${activeTab === 'statement' ? 'text-indigo-600' : 'text-stone-500 hover:text-stone-700'}`}
                                 >
-                                    Relevé de compte client
+                                    Relevé de compte{' '}
+                                    {invoice.type === 'purchase'
+                                        ? 'fournisseur'
+                                        : 'client'}
                                     {activeTab === 'statement' && (
                                         <div className="absolute bottom-0 left-0 h-0.5 w-full rounded-t-full bg-indigo-600" />
                                     )}
@@ -262,7 +266,10 @@ export default function InvoiceShow({ invoice, partner, flash }: Props) {
                                 <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                                     <div className="col-span-1">
                                         <h3 className="mb-2 flex items-center gap-1 text-sm font-medium text-stone-500">
-                                            <User className="h-4 w-4" /> Client
+                                            <User className="h-4 w-4" />{' '}
+                                            {invoice.type === 'purchase'
+                                                ? 'Fournisseur'
+                                                : 'Client'}
                                         </h3>
                                         <p className="text-base font-semibold text-stone-900">
                                             {invoice.customer_name}

@@ -46,6 +46,7 @@ export default function Create({
     import: importData,
 }: Props) {
     const { data, setData, post, processing, errors } = useForm({
+        type: 'sale',
         number: nextInvoiceNumber,
         partner_id: '',
         date: new Date().toISOString().split('T')[0],
@@ -173,9 +174,28 @@ export default function Create({
                                     </p>
                                 )}
                             </div>
-                            <div className="md:col-span-2">
+                            <div>
                                 <label className="mb-1 block text-sm font-medium text-stone-700">
-                                    Client{' '}
+                                    Type de facture{' '}
+                                    <span className="text-red-500">*</span>
+                                </label>
+                                <select
+                                    value={data.type}
+                                    onChange={(e) =>
+                                        setData('type', e.target.value)
+                                    }
+                                    className="w-full rounded-md border-stone-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                    required
+                                >
+                                    <option value="sale">Vente Client</option>
+                                    <option value="purchase">
+                                        Achat Fournisseur
+                                    </option>
+                                </select>
+                            </div>
+                            <div className="md:col-span-1">
+                                <label className="mb-1 block text-sm font-medium text-stone-700">
+                                    Partenaire{' '}
                                     <span className="text-red-500">*</span>
                                 </label>
                                 <select
@@ -187,7 +207,7 @@ export default function Create({
                                     required
                                 >
                                     <option value="">
-                                        Sélectionner un client
+                                        Sélectionner un partenaire
                                     </option>
                                     {customers.map((c) => (
                                         <option key={c.id} value={c.id}>

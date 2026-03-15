@@ -31,6 +31,7 @@ class InvoiceController extends Controller
 
         $invoices = $query->latest()->paginate(15)->through(fn($invoice) => [
             'id' => $invoice->id,
+            'type' => $invoice->type,
             'number' => $invoice->number,
             'customer_name' => $invoice->customer_name,
             'customer_phone' => $invoice->partner?->phone, // si relation partner
@@ -96,6 +97,7 @@ class InvoiceController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'type' => 'required|in:sale,purchase',
             'number' => 'required|unique:invoices',
             'partner_id' => 'required|exists:partners,id',
             'date' => 'required|date',
@@ -114,6 +116,7 @@ class InvoiceController extends Controller
             $partner = Partner::find($validated['partner_id']);
 
             $invoice = Invoice::create([
+                'type' => $validated['type'],
                 'number' => $validated['number'],
                 'partner_id' => $validated['partner_id'],
                 'customer_name' => $partner->name, // Conservé pour historique au cas où le partenaire est supprimé
