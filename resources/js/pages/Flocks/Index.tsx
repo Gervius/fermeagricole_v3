@@ -236,7 +236,6 @@ export default function FlockManagement({
                 .join(' ');
             addToast({ message: msg, type: 'error' });
         }
-
     }, []);
 
     // Recherche / filtres locaux (soumis via Inertia GET)

@@ -4,8 +4,8 @@ interface RecipeFormData {
     code: string;
     name: string;
     description: string;
-    yield_quantity: string;
-    yield_unit_id: string;
+    yield: string;
+    unit_id: string;
     is_active: boolean;
     ingredients: Array<{
         ingredient_id: string;
@@ -102,17 +102,15 @@ export default function RecipeForm({
                         type="number"
                         step="0.01"
                         min="0"
-                        value={data.yield_quantity}
-                        onChange={(e) =>
-                            setData('yield_quantity', e.target.value)
-                        }
+                        value={data.yield}
+                        onChange={(e) => setData('yield', e.target.value)}
                         className="w-full rounded-lg border border-stone-200 px-3.5 py-2 text-sm focus:ring-2 focus:ring-amber-400 focus:outline-none"
                         placeholder="Ex: 100"
                         required
                     />
-                    {errors.yield_quantity && (
+                    {errors.yield && (
                         <p className="mt-1 text-xs text-red-500">
-                            {errors.yield_quantity}
+                            {errors.yield}
                         </p>
                     )}
                 </div>
@@ -121,10 +119,8 @@ export default function RecipeForm({
                         Unité de rendement *
                     </label>
                     <select
-                        value={data.yield_unit_id}
-                        onChange={(e) =>
-                            setData('yield_unit_id', e.target.value)
-                        }
+                        value={data.unit_id}
+                        onChange={(e) => setData('unit_id', e.target.value)}
                         className="w-full rounded-lg border border-stone-200 bg-white px-3.5 py-2 text-sm focus:ring-2 focus:ring-amber-400 focus:outline-none"
                         required
                     >
@@ -135,9 +131,9 @@ export default function RecipeForm({
                             </option>
                         ))}
                     </select>
-                    {errors.yield_unit_id && (
+                    {errors.unit_id && (
                         <p className="mt-1 text-xs text-red-500">
-                            {errors.yield_unit_id}
+                            {errors.unit_id}
                         </p>
                     )}
                 </div>

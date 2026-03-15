@@ -10,14 +10,18 @@ interface Props {
         code: string;
         name: string;
         description: string | null;
-        yield_quantity: number;
-        yield_unit_id: number;
+        yield: number;
+        unit_id: number;
         is_active: boolean;
         ingredients: Array<{
             id?: number;
             ingredient_id: number;
             quantity: number;
             unit_id: number;
+            pivot?: {
+                quantity: number;
+                unit_id: number;
+            };
         }>;
     };
     ingredients: {
@@ -31,17 +35,21 @@ interface Props {
 
 export default function Edit({ recipe, ingredients, units }: Props) {
     const { data, setData, patch, processing, errors } = useForm({
-        code: recipe.code,
+        code: recipe.code || '',
         name: recipe.name,
         description: recipe.description || '',
-        yield_quantity: recipe.yield_quantity.toString(),
-        yield_unit_id: recipe.yield_unit_id.toString(),
+        yield: recipe.yield.toString(),
+        unit_id: recipe.unit_id.toString(),
         is_active: recipe.is_active,
         ingredients: recipe.ingredients.map((ing) => ({
             id: ing.id,
-            ingredient_id: ing.ingredient_id.toString(),
-            quantity: ing.quantity.toString(),
-            unit_id: ing.unit_id.toString(),
+            ingredient_id: ing.id?.toString(),
+            quantity: ing.pivot
+                ? ing.pivot.quantity.toString()
+                : ing.quantity.toString(),
+            unit_id: ing.pivot
+                ? ing.pivot.unit_id.toString()
+                : ing.unit_id.toString(),
         })),
     });
 

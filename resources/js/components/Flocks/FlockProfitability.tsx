@@ -243,13 +243,23 @@ export default function FlockProfitability({ data }: Props) {
                                 />
                                 <Tooltip
                                     content={(props: any) => {
-                                        const { active, payload, label } = props;
-                                        if (active && payload && payload.length) {
+                                        const { active, payload, label } =
+                                            props;
+                                        if (
+                                            active &&
+                                            payload &&
+                                            payload.length
+                                        ) {
                                             const data = payload[0].payload;
-                                            const value = data.isTotal !== undefined ? data.val : data.originalAmount;
+                                            const value =
+                                                data.isTotal !== undefined
+                                                    ? data.val
+                                                    : data.originalAmount;
                                             return (
                                                 <div className="rounded-lg border border-stone-200 bg-white p-3 text-sm shadow-lg">
-                                                    <p className="mb-1 font-semibold text-stone-900">{label}</p>
+                                                    <p className="mb-1 font-semibold text-stone-900">
+                                                        {label}
+                                                    </p>
                                                     <p
                                                         className={
                                                             value >= 0
