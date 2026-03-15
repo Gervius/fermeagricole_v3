@@ -61,7 +61,7 @@ class Partner extends Model
                 )
                 ->where('partner_id', $this->id)
                 ->whereNotIn('status', ['draft', 'cancelled']);
-        })->unionAll(
+        }, 'transactions')->unionAll(
             // Paiements (crédit client)
             \DB::table('payments')
                 ->join('invoices', 'payments.invoice_id', '=', 'invoices.id')
