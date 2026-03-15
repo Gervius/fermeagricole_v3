@@ -54,6 +54,7 @@ class FeedProductionController extends Controller
 
     public function create()
     {
+        //@jules replace 'ingredients.ingredient' by 'ingredients'
         $recipes = Recipe::with('ingredients.ingredient', 'unit')->get();
         $units = Unit::all();
         return Inertia::render('FeedProductions/Create', [
@@ -69,7 +70,7 @@ class FeedProductionController extends Controller
         $data['status'] = 'draft';
 
         FeedProduction::create($data);
-
+        // @jules the route is 'feedProductionIndex'
         return redirect()->route('feed-productions.index')
             ->with('success', 'Production créée en brouillon.');
     }
