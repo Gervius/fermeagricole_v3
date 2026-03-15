@@ -14,6 +14,7 @@ use App\Http\Requests\RejectFeedProductionRequest;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\DB;
 
 class FeedProductionController extends Controller
 {
@@ -54,7 +55,7 @@ class FeedProductionController extends Controller
 
     public function create()
     {
-        $recipes = Recipe::with('ingredients.ingredient', 'unit')->get();
+        $recipes = Recipe::with('ingredients', 'unit')->get();
         $units = Unit::all();
         return Inertia::render('FeedProductions/Create', [
             'recipes' => $recipes,
