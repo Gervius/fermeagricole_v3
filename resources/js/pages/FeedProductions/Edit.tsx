@@ -9,17 +9,24 @@ interface Props {
         id: number;
         recipe_id: number;
         production_date: string;
-        quantity: number;
+        quantity_produced: number;
+        unit_id: number;
         notes: string | null;
     };
-    recipes: { id: number; name: string; yield_unit: string }[];
+    recipes: {
+        id: number;
+        name: string;
+        yield_unit: string;
+        unit_id?: number;
+    }[];
 }
 
 export default function Edit({ production, recipes }: Props) {
     const { data, setData, patch, processing, errors } = useForm({
         recipe_id: production.recipe_id.toString(),
         production_date: production.production_date,
-        quantity: production.quantity.toString(),
+        quantity_produced: production.quantity_produced.toString(),
+        unit_id: production.unit_id.toString(),
         notes: production.notes || '',
     });
 
