@@ -31,21 +31,31 @@ export default function Create({ recipes }: Props) {
     const { data, setData, post, processing, errors } = useForm({
         recipe_id: '',
         production_date: new Date().toISOString().split('T')[0],
-        quantity: '',
+        quantity_produced: '',
+        unit_id: '',
         notes: '',
     });
 
     // 1. On trouve la recette sélectionnée
     const selectedRecipe = useMemo(() => {
-        return recipes.find((r) => r.id.toString() === data.recipe_id);
+        const recipe = recipes.find((r) => r.id.toString() === data.recipe_id);
+        if (recipe && !data.unit_id && recipe.unit) {
+            // Un peu hacky de set dans un render, donc on le gère plutôt dans le onchange,
+            // mais on va assumer que le select déclenche ça correctement dans ProductionForm
+        }
+        return recipe;
     }, [data.recipe_id, recipes]);
 
     // 2. Le fameux useMemo qui calcule tout en TEMPS RÉEL (Front-end pur)
     const ingredientDetails = useMemo(() => {
-        if (!selectedRecipe || !data.quantity || isNaN(Number(data.quantity)))
+        if (
+            !selectedRecipe ||
+            !data.quantity_produced ||
+            isNaN(Number(data.quantity_produced))
+        )
             return [];
 
-        const productionQty = Number(data.quantity);
+        const productionQty = Number(data.quantity_produced);
         // On calcule le facteur multiplicateur en fonction du rendement de base de la recette
         const factor = productionQty / selectedRecipe.yield;
 
@@ -60,7 +70,7 @@ export default function Create({ recipes }: Props) {
                 hasEnough: ing.current_stock >= neededQty,
             };
         });
-    }, [selectedRecipe, data.quantity]);
+    }, [selectedRecipe, data.quantity_produced]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -74,6 +84,7 @@ export default function Create({ recipes }: Props) {
         id: r.id,
         name: r.name,
         yield_unit: r.unit?.symbol || '',
+        unit_id: r.unit ? r.unit.id : null,
     }));
 
     return (
@@ -94,8 +105,8 @@ export default function Create({ recipes }: Props) {
 
                         {/* Affichage Dynamique du Calculateur */}
                         {selectedRecipe &&
-                            data.quantity &&
-                            Number(data.quantity) > 0 && (
+                            data.quantity_produced &&
+                            Number(data.quantity_produced) > 0 && (
                                 <div className="mt-6 overflow-hidden rounded-lg border border-stone-200 bg-white shadow-sm">
                                     <div className="border-b border-stone-200 bg-stone-50 px-4 py-3">
                                         <h3 className="text-sm font-semibold text-stone-800">

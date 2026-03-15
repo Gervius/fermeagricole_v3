@@ -1,7 +1,8 @@
 interface ProductionFormData {
     recipe_id: string;
     production_date: string;
-    quantity: string;
+    quantity_produced: string;
+    unit_id: string;
     notes: string;
 }
 
@@ -34,7 +35,20 @@ export default function ProductionForm({
                 </label>
                 <select
                     value={data.recipe_id}
-                    onChange={(e) => setData('recipe_id', e.target.value)}
+                    onChange={(e) => {
+                        const newRecipeId = e.target.value;
+                        setData('recipe_id', newRecipeId);
+
+                        const matchedRecipe = recipes.find(
+                            (r) => r.id.toString() === newRecipeId,
+                        );
+                        if (matchedRecipe && (matchedRecipe as any).unit_id) {
+                            setData(
+                                'unit_id',
+                                (matchedRecipe as any).unit_id.toString(),
+                            );
+                        }
+                    }}
                     className="w-full rounded-lg border border-stone-200 bg-white px-3.5 py-2 text-sm focus:ring-2 focus:ring-amber-400 focus:outline-none"
                     required
                 >
@@ -79,15 +93,17 @@ export default function ProductionForm({
                     type="number"
                     step="0.01"
                     min="0"
-                    value={data.quantity}
-                    onChange={(e) => setData('quantity', e.target.value)}
+                    value={data.quantity_produced}
+                    onChange={(e) =>
+                        setData('quantity_produced', e.target.value)
+                    }
                     className="w-full rounded-lg border border-stone-200 px-3.5 py-2 text-sm focus:ring-2 focus:ring-amber-400 focus:outline-none"
                     placeholder="Ex: 1000"
                     required
                 />
-                {errors.quantity && (
+                {errors.quantity_produced && (
                     <p className="mt-1 text-xs text-red-500">
-                        {errors.quantity}
+                        {errors.quantity_produced}
                     </p>
                 )}
             </div>
