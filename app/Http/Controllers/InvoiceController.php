@@ -84,8 +84,12 @@ class InvoiceController extends Controller
         return Inertia::render('Invoices/Create', [
             'import' => $import,
             'activeFlocks' => Flock::active()->get(['id', 'name']),
+            'ingredients' => \App\Models\Ingredient::where('is_active', true)->get(['id', 'name']),
             'customers' => Partner::where('is_active', true)
                                               ->whereIn('type', ['customer', 'both'])
+                                              ->get(['id', 'name']),
+            'suppliers' => Partner::where('is_active', true)
+                                              ->whereIn('type', ['supplier', 'both'])
                                               ->get(['id', 'name']),
             'nextInvoiceNumber' => 'FAC-' . date('Ymd') . '-' . str_pad(Invoice::count() + 1, 4, '0', STR_PAD_LEFT)
         ]);
@@ -154,7 +158,7 @@ class InvoiceController extends Controller
         
         DB::transaction(function () use ($invoice) {
             foreach ($invoice->items as $item) {
-                if ($item->itemable_type === Flock::class) {
+                if ($invoice->type === 'sale' && $item->itemable_type === Flock::class) {
                     $flock = Flock::find($item->itemable_id);
                     if (!$flock || !$flock->canSell($item->quantity)) {
                         throw new \Exception("Stock insuffisant pour le lot {$flock->name}. Disponible : {$flock->calculated_quantity}, demandé : {$item->quantity}");
