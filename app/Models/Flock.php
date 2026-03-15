@@ -170,8 +170,13 @@ class Flock extends Model
      */
     public function getCalculatedQuantityAttribute(): int
     {
-        $salesCount = $this->invoiceItems()->sum('quantity');
-        $lossesCount = $this->dailyRecords()->sum('losses');
+        // Seulement les ventes dont la facture n'est pas annulée ni brouillon
+        $salesCount = $this->invoiceItems()->whereHas('invoice', function ($query) {
+            $query->whereIn('status', ['sent', 'paid']);
+        })->sum('quantity');
+
+        // Seulement les pertes approuvées
+        $lossesCount = $this->dailyRecords()->where('status', 'approved')->sum('losses');
         
         return $this->initial_quantity - ($salesCount + $lossesCount);
     }

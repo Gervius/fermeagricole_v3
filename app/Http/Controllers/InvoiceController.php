@@ -128,11 +128,11 @@ class InvoiceController extends Controller
             foreach ($validated['items'] as $item) {
                 $invoice->items()->create([
                     'description' => $item['description'],
-                    'quantity' => $item['quantity'],
-                    'unit_price' => $item['unit_price'],
-                    'total' => $item['quantity'] * $item['unit_price'],
-                    'itemable_id' => $item['itemable_id'],
-                    'itemable_type' => $item['itemable_type'],
+                    'quantity' => (float) $item['quantity'],
+                    'unit_price' => (float) $item['unit_price'],
+                    'total' => (float) $item['quantity'] * (float) $item['unit_price'],
+                    'itemable_id' => $item['itemable_id'] ? (int) $item['itemable_id'] : null,
+                    'itemable_type' => $item['itemable_type'] ?: null,
                 ]);
             }
         });
@@ -176,12 +176,13 @@ class InvoiceController extends Controller
         $partner = $invoice->partner;
         $statement = $partner ? $partner->getStatement() : [];
 
+        $invoiceData = $invoice->toArray();
+        $invoiceData['can_approve'] = auth()->user()->can('approve', $invoice);
+        $invoiceData['can_cancel'] = auth()->user()->can('cancel', $invoice);
+        $invoiceData['can_add_payment'] = $invoice->can_add_payment;
+
         return Inertia::render('Invoices/Show', [
-            'invoice' => array_merge($invoice->toArray(), [
-                'can_approve' => auth()->user()->can('approve', $invoice),
-                'can_cancel' => auth()->user()->can('cancel', $invoice),
-                'can_add_payment' => $invoice->can_add_payment,
-            ]),
+            'invoice' => $invoiceData,
             'remaining_amount' => $invoice->total - $invoice->payments()->sum('amount'),
             'partner' => $partner ? [
                 'id' => $partner->id,

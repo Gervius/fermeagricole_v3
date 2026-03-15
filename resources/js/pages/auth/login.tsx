@@ -54,7 +54,9 @@ export default function Login({
 
                             <div className="grid gap-2">
                                 <div className="flex items-center">
-                                    <Label htmlFor="password">Mot de passe</Label>
+                                    <Label htmlFor="password">
+                                        Mot de passe
+                                    </Label>
                                     {canResetPassword && (
                                         <TextLink
                                             href={request()}
@@ -83,12 +85,14 @@ export default function Login({
                                     name="remember"
                                     tabIndex={3}
                                 />
-                                <Label htmlFor="remember">Se souvenir de moi</Label>
+                                <Label htmlFor="remember">
+                                    Se souvenir de moi
+                                </Label>
                             </div>
 
                             <Button
                                 type="submit"
-                                className="mt-4 w-full bg-amber-500 hover:bg-amber-600 text-white"
+                                className="mt-4 w-full bg-amber-500 text-white hover:bg-amber-600"
                                 tabIndex={4}
                                 disabled={processing}
                                 data-test="login-button"

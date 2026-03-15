@@ -66,29 +66,26 @@ class StockMouvementObserver
                 break;
 
             case 'adjust':
-                // Ajustement : on fixe le stock à la nouvelle quantité, et on recalcule le PMP si c'est une entrée nette ?
-                // Pour un ajustement, on considère que la valeur du stock est ajustée, donc on peut soit garder l'ancien PMP,
-                // soit recalculer. Ici, on va simplement modifier le stock sans toucher au PMP (sauf si l'ajustement est une entrée avec prix).
-                if ($movement->unit_price && $movement->unit_price > 0) {
-                    // Traiter comme une entrée avec prix
+                // Ajustement : la quantité de mouvement est la différence (delta)
+                // Ex: si adjust de +10, stock augmente de 10. Si adjust de -5, stock diminue de 5.
+                $newStock = $ingredient->current_stock + $quantityInDefaultUnit;
+
+                if ($quantityInDefaultUnit > 0 && $movement->unit_price && $movement->unit_price > 0) {
+                    // Si ajustement positif avec un prix (comme une entrée de rattrapage)
                     $priceInDefaultUnit = $movement->unit_price;
                     if ($unit->id !== $defaultUnit->id) {
                         $priceInDefaultUnit = $movement->unit_price * $this->conversionService->convert(1, $unit, $defaultUnit);
                     }
                     $oldValue = $ingredient->current_stock * $ingredient->pmp;
                     $newValue = $quantityInDefaultUnit * $priceInDefaultUnit;
-                    $newStock = $quantityInDefaultUnit; // On remplace le stock
 
                     if ($newStock > 0) {
                         $ingredient->pmp = ($oldValue + $newValue) / $newStock;
-                    } else {
-                        $ingredient->pmp = 0;
                     }
-                    $ingredient->current_stock = $newStock;
-                } else {
-                    // Ajustement sans prix : on remplace juste la quantité, le PMP reste inchangé
-                    $ingredient->current_stock = $quantityInDefaultUnit;
                 }
+                // Si quantité négative, on ne change pas le PMP, on ajuste juste le stock.
+
+                $ingredient->current_stock = $newStock;
                 break;
         }
 
