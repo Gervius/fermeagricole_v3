@@ -12,7 +12,6 @@ import {
 } from '@/routes';
 import { Head, router } from '@inertiajs/react';
 import {
-    AlertCircle,
     ArrowDownCircle,
     ArrowUpCircle,
     CheckCircle,
@@ -446,15 +445,38 @@ export default function StockMovementsIndex({
                                                                 />
                                                             )}
 
-                                                            {/* Approuver / Rejeter (can_approve ou can_reject) */}
-                                                            {(m.can_approve ||
-                                                                m.can_reject) && (
+                                                            {/* Approuver (can_approve) */}
+                                                            {m.can_approve && (
                                                                 <ActionButton
                                                                     icon={
-                                                                        <AlertCircle className="h-4 w-4" />
+                                                                        <CheckCircle className="h-4 w-4 text-emerald-600" />
                                                                     }
-                                                                    title="Approuver / Rejeter"
-                                                                    colorClass="hover:text-emerald-600 hover:bg-emerald-50"
+                                                                    title="Approuver"
+                                                                    colorClass="hover:text-emerald-700 hover:bg-emerald-50"
+                                                                    onClick={() => {
+                                                                        if (
+                                                                            confirm(
+                                                                                'Voulez-vous vraiment approuver ce mouvement ?',
+                                                                            )
+                                                                        ) {
+                                                                            router.post(
+                                                                                stockMovementsApprove.url(
+                                                                                    m.id,
+                                                                                ),
+                                                                            );
+                                                                        }
+                                                                    }}
+                                                                />
+                                                            )}
+
+                                                            {/* Rejeter (can_reject) */}
+                                                            {m.can_reject && (
+                                                                <ActionButton
+                                                                    icon={
+                                                                        <XCircle className="h-4 w-4 text-red-600" />
+                                                                    }
+                                                                    title="Rejeter"
+                                                                    colorClass="hover:text-red-700 hover:bg-red-50"
                                                                     onClick={() =>
                                                                         openApproveModal(
                                                                             m,
@@ -609,15 +631,6 @@ export default function StockMovementsIndex({
                                     className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-red-500 px-4 py-2 text-sm text-white transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-40"
                                 >
                                     <XCircle className="h-4 w-4" /> Rejeter
-                                </button>
-                            )}
-                            {selectedMovement.can_approve && (
-                                <button
-                                    onClick={handleApprove}
-                                    className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm text-white transition-colors hover:bg-emerald-700"
-                                >
-                                    <CheckCircle className="h-4 w-4" />{' '}
-                                    Approuver
                                 </button>
                             )}
                         </div>

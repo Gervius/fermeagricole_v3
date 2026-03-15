@@ -21,7 +21,9 @@ interface Flock {
 
 interface Props {
     activeFlocks: Flock[];
+    ingredients: { id: number; name: string }[];
     customers: { id: number; name: string }[];
+    suppliers: { id: number; name: string }[];
     nextInvoiceNumber: string;
     import?: {
         itemable_id: number;
@@ -41,7 +43,9 @@ const typeIcons: Record<string, React.ReactNode> = {
 
 export default function Create({
     activeFlocks,
+    ingredients,
     customers,
+    suppliers,
     nextInvoiceNumber,
     import: importData,
 }: Props) {
@@ -94,14 +98,25 @@ export default function Create({
                 newItems[index].description = "Plateaux d'œufs";
             }
         }
-        if (
-            field === 'itemable_id' &&
-            newItems[index].itemable_type === 'App\\Models\\Flock'
-        ) {
-            const flock = activeFlocks.find((f) => f.id === Number(value));
-            if (flock) {
-                newItems[index].description =
-                    `Poules de réforme (Lot ${flock.name})`;
+        if (field === 'itemable_id') {
+            if (newItems[index].itemable_type === 'App\\Models\\Flock') {
+                const flock = activeFlocks.find((f) => f.id === Number(value));
+                if (flock) {
+                    newItems[index].description =
+                        data.type === 'purchase'
+                            ? `Achat de poussins/poulettes (Lot ${flock.name})`
+                            : `Poules de réforme (Lot ${flock.name})`;
+                }
+            } else if (
+                newItems[index].itemable_type === 'App\\Models\\Ingredient'
+            ) {
+                const ingredient = ingredients.find(
+                    (i) => i.id === Number(value),
+                );
+                if (ingredient) {
+                    newItems[index].description =
+                        `Achat d'ingrédient : ${ingredient.name}`;
+                }
             }
         }
 
@@ -209,7 +224,10 @@ export default function Create({
                                     <option value="">
                                         Sélectionner un partenaire
                                     </option>
-                                    {customers.map((c) => (
+                                    {(data.type === 'sale'
+                                        ? customers
+                                        : suppliers
+                                    ).map((c) => (
                                         <option key={c.id} value={c.id}>
                                             {c.name}
                                         </option>
@@ -321,13 +339,30 @@ export default function Create({
                                                         <option value="">
                                                             Standard (Autre)
                                                         </option>
-                                                        <option value="App\Models\EggMovement">
-                                                            Vente d'œufs
-                                                        </option>
-                                                        <option value="App\Models\Flock">
-                                                            Vente de poules
-                                                            (Réforme)
-                                                        </option>
+                                                        {data.type ===
+                                                        'sale' ? (
+                                                            <>
+                                                                <option value="App\Models\EggMovement">
+                                                                    Vente d'œufs
+                                                                </option>
+                                                                <option value="App\Models\Flock">
+                                                                    Vente de
+                                                                    poules
+                                                                    (Réforme)
+                                                                </option>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <option value="App\Models\Ingredient">
+                                                                    Achat
+                                                                    d'ingrédients
+                                                                </option>
+                                                                <option value="App\Models\Flock">
+                                                                    Achat de
+                                                                    poussins/poulettes
+                                                                </option>
+                                                            </>
+                                                        )}
                                                     </select>
                                                 </div>
                                             </td>
@@ -358,6 +393,39 @@ export default function Create({
                                                                     value={f.id}
                                                                 >
                                                                     {f.name}
+                                                                </option>
+                                                            ),
+                                                        )}
+                                                    </select>
+                                                ) : item.itemable_type ===
+                                                  'App\\Models\\Ingredient' ? (
+                                                    <select
+                                                        value={
+                                                            item.itemable_id ||
+                                                            ''
+                                                        }
+                                                        onChange={(e) =>
+                                                            updateItem(
+                                                                idx,
+                                                                'itemable_id',
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                        className="w-full rounded-md border-stone-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-xs"
+                                                    >
+                                                        <option value="">
+                                                            Sélectionner un
+                                                            ingrédient
+                                                        </option>
+                                                        {ingredients.map(
+                                                            (ing) => (
+                                                                <option
+                                                                    key={ing.id}
+                                                                    value={
+                                                                        ing.id
+                                                                    }
+                                                                >
+                                                                    {ing.name}
                                                                 </option>
                                                             ),
                                                         )}
