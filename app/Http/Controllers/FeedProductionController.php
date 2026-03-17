@@ -14,6 +14,7 @@ use App\Http\Requests\RejectFeedProductionRequest;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\DB;
 
 class FeedProductionController extends Controller
 {
@@ -54,7 +55,7 @@ class FeedProductionController extends Controller
 
     public function create()
     {
-        $recipes = Recipe::with('ingredients.ingredient', 'unit')->get();
+        $recipes = Recipe::with('ingredients', 'unit')->get();
         $units = Unit::all();
         return Inertia::render('FeedProductions/Create', [
             'recipes' => $recipes,
@@ -70,13 +71,13 @@ class FeedProductionController extends Controller
 
         FeedProduction::create($data);
 
-        return redirect()->route('feed-productions.index')
+        return redirect()->route('feedProductionsIndex')
             ->with('success', 'Production créée en brouillon.');
     }
 
     public function show(FeedProduction $feedProduction)
     {
-        $feedProduction->load(['recipe.ingredients.ingredient', 'unit', 'creator', 'approver']);
+        $feedProduction->load(['recipe.ingredients', 'unit', 'creator', 'approver']);
         
         return Inertia::render('FeedProductions/Show', [
             'production' => [
@@ -105,7 +106,7 @@ class FeedProductionController extends Controller
     {
         $this->authorize('update', $feedProduction);
 
-        $recipes = Recipe::with('ingredients.ingredient', 'unit')->get();
+        $recipes = Recipe::with('ingredients', 'unit')->get();
         $units = Unit::all();
         return Inertia::render('FeedProductions/Edit', [
             'production' => $feedProduction,
@@ -120,7 +121,7 @@ class FeedProductionController extends Controller
 
         $feedProduction->update($request->validated());
 
-        return redirect()->route('feed-productions.index')
+        return redirect()->route('feedProductionsIndex')
             ->with('success', 'Production mise à jour.');
     }
 
@@ -130,7 +131,7 @@ class FeedProductionController extends Controller
 
         $feedProduction->delete();
 
-        return redirect()->route('feed-productions.index')
+        return redirect()->route('feedProductionsIndex')
             ->with('success', 'Production supprimée.');
     }
 
@@ -142,7 +143,7 @@ class FeedProductionController extends Controller
         $feedProduction->status = 'pending';
         $feedProduction->save();
 
-        return redirect()->route('feed-productions.index')
+        return redirect()->route('feedProductionsIndex')
             ->with('success', 'Production soumise pour approbation.');
     }
 
@@ -159,7 +160,7 @@ class FeedProductionController extends Controller
             $feedProduction->save(); 
         });
 
-        return redirect()->route('feed-productions.index')
+        return redirect()->route('feedProductionsIndex')
             ->with('success', 'Production approuvée et stocks mis à jour.');
     }
 
@@ -175,7 +176,7 @@ class FeedProductionController extends Controller
         $feedProduction->rejection_reason = $request->reason;
         $feedProduction->save();
 
-        return redirect()->route('feed-productions.index')
+        return redirect()->route('feedProductionsIndex')
             ->with('success', 'Production rejetée.');
     }
 }

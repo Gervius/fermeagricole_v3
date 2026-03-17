@@ -92,7 +92,7 @@ export default function Register() {
 
                             <Button
                                 type="submit"
-                                className="mt-2 w-full bg-amber-500 hover:bg-amber-600 text-white"
+                                className="mt-2 w-full bg-amber-500 text-white hover:bg-amber-600"
                                 tabIndex={5}
                                 data-test="register-user-button"
                             >
@@ -103,7 +103,11 @@ export default function Register() {
 
                         <div className="text-center text-sm text-muted-foreground">
                             Vous avez déjà un compte ?{' '}
-                            <TextLink href={login()} tabIndex={6} className="text-amber-600">
+                            <TextLink
+                                href={login()}
+                                tabIndex={6}
+                                className="text-amber-600"
+                            >
                                 Se connecter
                             </TextLink>
                         </div>

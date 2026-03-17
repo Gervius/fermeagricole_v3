@@ -13,14 +13,15 @@ import {
     accountingReview,
     buildingsIndex,
     dashboard,
+    feedProductionsIndex,
     generation,
     invoicesIndex,
     journalVouchersIndex,
+    partnersIndex,
     recipesIndex,
     reportsBalance,
     stockMovementsIndex,
     treatmentsIndex,
-    feedProductionsIndex
 } from '@/routes';
 import { NavItem, type NavGroup } from '@/types';
 import { Link } from '@inertiajs/react';
@@ -29,8 +30,6 @@ import {
     BookOpen,
     Calculator,
     ClipboardList,
-    Coins,
-    Egg,
     FileText,
     Folder,
     LayoutGrid,
@@ -39,9 +38,8 @@ import {
     Settings,
     ShoppingCart,
     Stethoscope,
-    UsersRound
+    UsersRound,
 } from 'lucide-react';
-import { partnersIndex } from '@/routes';
 import AppLogo from './app-logo';
 
 const navGroups: NavGroup[] = [
@@ -85,7 +83,7 @@ const navGroups: NavGroup[] = [
             },
             {
                 title: 'Productions',
-                href: feedProductionsIndex(), 
+                href: feedProductionsIndex(),
                 icon: Package,
             },
         ],

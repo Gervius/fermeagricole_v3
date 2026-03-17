@@ -1,8 +1,8 @@
-import React from 'react';
-import { Head, useForm, router } from '@inertiajs/react';
-import SettingsLayout from '@/layouts/settings/layout';
 import UserForm from '@/components/Users/UserForm';
-import { usersStore, usersIndex } from '@/routes';
+import SettingsLayout from '@/layouts/settings/layout';
+import { usersIndex, usersStore } from '@/routes';
+import { Head, router, useForm } from '@inertiajs/react';
+import React from 'react';
 
 interface Props {
     roles: { id: number; name: string }[];
@@ -25,14 +25,18 @@ export default function Create({ roles }: Props) {
     };
 
     return (
-        <SettingsLayout breadcrumbs={[
-            { title: 'Utilisateurs', href: usersIndex.url() },
-            { title: 'Nouvel utilisateur', href: usersCreate.url() }
-        ]}>
+        <SettingsLayout
+            breadcrumbs={[
+                { title: 'Utilisateurs', href: usersIndex.url() },
+                { title: 'Nouvel utilisateur', href: usersCreate.url() },
+            ]}
+        >
             <Head title="Nouvel utilisateur" />
-            <div className="max-w-2xl mx-auto py-8 px-4">
-                <div className="bg-white border border-stone-200 rounded-xl p-6">
-                    <h1 className="text-xl font-semibold text-stone-900 mb-6">Créer un utilisateur</h1>
+            <div className="mx-auto max-w-2xl px-4 py-8">
+                <div className="rounded-xl border border-stone-200 bg-white p-6">
+                    <h1 className="mb-6 text-xl font-semibold text-stone-900">
+                        Créer un utilisateur
+                    </h1>
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <UserForm
                             data={data}
@@ -44,14 +48,14 @@ export default function Create({ roles }: Props) {
                             <button
                                 type="button"
                                 onClick={() => router.get(usersIndex.url())}
-                                className="flex-1 px-4 py-2 border border-stone-200 text-stone-700 text-sm rounded-lg hover:bg-stone-50 transition-colors"
+                                className="flex-1 rounded-lg border border-stone-200 px-4 py-2 text-sm text-stone-700 transition-colors hover:bg-stone-50"
                             >
                                 Annuler
                             </button>
                             <button
                                 type="submit"
                                 disabled={processing}
-                                className="flex-1 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm rounded-lg transition-colors disabled:opacity-40"
+                                className="flex-1 rounded-lg bg-amber-500 px-4 py-2 text-sm text-white transition-colors hover:bg-amber-600 disabled:opacity-40"
                             >
                                 Créer
                             </button>

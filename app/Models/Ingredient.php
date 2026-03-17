@@ -22,6 +22,7 @@ class Ingredient extends Model
         'pmp',
         'min_stock',
         'max_stock',
+        'low_stock_threshold',
         'description',
         'is_active',
     ];
