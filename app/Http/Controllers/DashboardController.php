@@ -139,7 +139,9 @@ class DashboardController extends Controller
             if ($buildingId) {
                 $query->whereHas('flock', fn($q) => $q->where('building_id', $buildingId));
             }
-            $eggs = $query->sum('eggs');
+            $eggs = (clone $query)->sum('eggs');
+            $feedConsumed = (clone $query)->sum('feed_consumed'); // Total feed in kg
+            $waterConsumed = (clone $query)->sum('water_consumed'); // Total water in L
 
             // On estime le nombre de poules actives à cette date (simplification : on prend le count actuel des lots actifs)
             // Pour une précision absolue, il faudrait historiser l'effectif quotidien.
@@ -155,6 +157,8 @@ class DashboardController extends Controller
                 'day' => $currentDate->format('D'), // ex: Lun, Mar
                 'rate' => round($rate, 1),
                 'eggs' => $eggs,
+                'feed_consumed' => round($feedConsumed, 2),
+                'water_consumed' => round($waterConsumed, 2),
             ];
         }
 

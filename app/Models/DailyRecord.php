@@ -12,6 +12,9 @@ class DailyRecord extends Model
         'date',
         'losses',
         'eggs',
+        'feed_type_id',
+        'feed_consumed',
+        'water_consumed',
         'notes',
         'status',
         'created_by',
@@ -43,6 +46,11 @@ class DailyRecord extends Model
         return $this->belongsTo(User::class, 'approved_by');
     }
 
+    public function feedType(): BelongsTo
+    {
+        return $this->belongsTo(Recipe::class, 'feed_type_id');
+    }
+
     // Scopes
     public function scopePending($query)
     {
@@ -52,6 +60,42 @@ class DailyRecord extends Model
     public function scopeApproved($query)
     {
         return $query->where('status', 'approved');
+    }
+
+    /**
+     * Compute average feed consumed per bird (grams)
+     */
+    public function getAvgFeedPerBirdAttribute(): ?float
+    {
+        if (!$this->feed_consumed || !$this->flock || $this->flock->current_quantity <= 0) {
+            return null;
+        }
+        // feed_consumed is in kg, convert to grams
+        return round(($this->feed_consumed * 1000) / $this->flock->current_quantity, 2);
+    }
+
+    /**
+     * Compute average water consumed per bird (ml)
+     */
+    public function getAvgWaterPerBirdAttribute(): ?float
+    {
+        if (!$this->water_consumed || !$this->flock || $this->flock->current_quantity <= 0) {
+            return null;
+        }
+        // water_consumed is in liters, convert to ml
+        return round(($this->water_consumed * 1000) / $this->flock->current_quantity, 2);
+    }
+
+    /**
+     * Theoretical Norm (placeholder for now)
+     */
+    public function getTheoreticalNormAttribute(): array
+    {
+        // Placeholder values: e.g. 115g feed and 230ml water per bird
+        return [
+            'feed' => 115, // in grams
+            'water' => 230, // in ml
+        ];
     }
 
     // Vérifications

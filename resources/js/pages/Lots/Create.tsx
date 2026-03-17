@@ -1,5 +1,5 @@
-{
-    /**
+
+{/**
 import { type Batiment } from '@/types';
 import { useForm } from '@inertiajs/react';
 import { generationPost } from '@/routes';
@@ -111,5 +111,4 @@ export function FormGeneration({ batiments,  hideForm }: props){
     );
   }
 
-*/
-}
+*/}

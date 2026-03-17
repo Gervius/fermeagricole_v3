@@ -21,6 +21,9 @@ class StoreDailyRecordRequest extends FormRequest
             'date' => 'required|date',
             'losses' => 'required|integer|min:0',
             'eggs' => 'required|integer|min:0',
+            'feed_type_id' => 'nullable|exists:recipes,id',
+            'feed_consumed' => 'nullable|numeric|min:0',
+            'water_consumed' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string|max:500',
         ];
     }

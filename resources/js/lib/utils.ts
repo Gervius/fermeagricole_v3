@@ -18,11 +18,9 @@ export function resolveUrl(url: NonNullable<InertiaLinkProps['href']>): string {
 }
 
 export function formatCurrency(amount: number): string {
-    return (
-        new Intl.NumberFormat('fr-FR', {
-            style: 'decimal',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 2,
-        }).format(amount) + ' FCFA'
-    );
+    return new Intl.NumberFormat('fr-FR', {
+        style: 'decimal',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+    }).format(amount) + ' FCFA';
 }

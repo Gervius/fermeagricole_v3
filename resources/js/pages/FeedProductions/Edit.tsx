@@ -1,32 +1,25 @@
-import ProductionForm from '@/components/FeedProductions/ProductionForm';
+import React, { useState } from 'react';
+import { Head, useForm, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
-import { feedProductionsIndex, feedProductionsUpdate } from '@/routes';
-import { Head, router, useForm } from '@inertiajs/react';
-import React from 'react';
+import ProductionForm from '@/components/FeedProductions/ProductionForm';
+import { feedProductionsUpdate, feedProductionsIndex } from '@/routes';
 
 interface Props {
     production: {
         id: number;
         recipe_id: number;
         production_date: string;
-        quantity_produced: number;
-        unit_id: number;
+        quantity: number;
         notes: string | null;
     };
-    recipes: {
-        id: number;
-        name: string;
-        yield_unit: string;
-        unit_id?: number;
-    }[];
+    recipes: { id: number; name: string; yield_unit: string }[];
 }
 
 export default function Edit({ production, recipes }: Props) {
     const { data, setData, patch, processing, errors } = useForm({
         recipe_id: production.recipe_id.toString(),
         production_date: production.production_date,
-        quantity_produced: production.quantity_produced.toString(),
-        unit_id: production.unit_id.toString(),
+        quantity: production.quantity.toString(),
         notes: production.notes || '',
     });
 
@@ -38,20 +31,11 @@ export default function Edit({ production, recipes }: Props) {
     };
 
     return (
-        <AppLayout
-            breadcrumbs={[
-                {
-                    title: 'Modifier production',
-                    href: feedProductionsUpdate.url(production.id),
-                },
-            ]}
-        >
+        <AppLayout breadcrumbs={[{ title: 'Modifier production', href: feedProductionsUpdate.url(production.id) }]}>
             <Head title="Modifier production" />
-            <div className="mx-auto max-w-2xl px-4 py-8">
-                <div className="rounded-xl border border-stone-200 bg-white p-6">
-                    <h1 className="mb-6 text-xl font-semibold text-stone-900">
-                        Modifier la production
-                    </h1>
+            <div className="max-w-2xl mx-auto py-8 px-4">
+                <div className="bg-white border border-stone-200 rounded-xl p-6">
+                    <h1 className="text-xl font-semibold text-stone-900 mb-6">Modifier la production</h1>
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <ProductionForm
                             data={data}
@@ -62,17 +46,15 @@ export default function Edit({ production, recipes }: Props) {
                         <div className="flex gap-3 pt-4">
                             <button
                                 type="button"
-                                onClick={() =>
-                                    router.get(feedProductionsIndex.url())
-                                }
-                                className="flex-1 rounded-lg border border-stone-200 px-4 py-2 text-sm text-stone-700 transition-colors hover:bg-stone-50"
+                                onClick={() => router.get(feedProductionsIndex.url())}
+                                className="flex-1 px-4 py-2 border border-stone-200 text-stone-700 text-sm rounded-lg hover:bg-stone-50 transition-colors"
                             >
                                 Annuler
                             </button>
                             <button
                                 type="submit"
                                 disabled={processing}
-                                className="flex-1 rounded-lg bg-amber-500 px-4 py-2 text-sm text-white transition-colors hover:bg-amber-600 disabled:opacity-40"
+                                className="flex-1 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm rounded-lg transition-colors disabled:opacity-40"
                             >
                                 Mettre à jour
                             </button>

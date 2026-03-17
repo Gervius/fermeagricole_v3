@@ -15,9 +15,9 @@ class Invoice extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'type', 'number', 'reference_document', 'customer_name', 'date', 'due_date',
-        'subtotal', 'commercial_discount', 'tax_rate', 'tax_amount', 'total',
-        'status', 'payment_status', 'notes', 'created_by', 'approved_by', 'partner_id'
+        'number', 'customer_name', 'date', 'due_date',
+        'subtotal', 'tax_rate', 'tax_amount', 'total',
+        'status', 'payment_status', 'notes', 'created_by', 'approved_by'
     ];
 
     protected $casts = [
@@ -66,15 +66,5 @@ class Invoice extends Model
     public function getCanAddPaymentAttribute(): bool
     {
         return $this->status !== 'cancelled' && $this->remaining_amount > 0;
-    }
-
-    public function scopeSales($query)
-    {
-        return $query->where('type', 'sale');
-    }
-
-    public function scopePurchases($query)
-    {
-        return $query->where('type', 'purchase');
     }
 }

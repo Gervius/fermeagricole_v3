@@ -1,12 +1,4 @@
-import React, {
-    createContext,
-    useCallback,
-    useContext,
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
-} from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo, useRef, useEffect } from 'react';
 
 type ToastType = 'success' | 'error' | 'info';
 
@@ -32,38 +24,30 @@ export function useToasts(): ToastContextValue {
         // Provide no-op implementations to prevent runtime errors and log a warning.
         return {
             addToast: (t) => {
-                console.warn(
-                    '[ToastProvider] addToast called without provider. Message:',
-                    t?.message,
-                );
+                // eslint-disable-next-line no-console
+                console.warn('[ToastProvider] addToast called without provider. Message:', t?.message);
                 return 'noop';
             },
             removeToast: (id: string) => {
-                console.warn(
-                    '[ToastProvider] removeToast called without provider. id:',
-                    id,
-                );
+                // eslint-disable-next-line no-console
+                console.warn('[ToastProvider] removeToast called without provider. id:', id);
             },
         } as ToastContextValue;
     }
     return ctx;
 }
 
-export default function ToastProvider({
-    children,
-}: {
-    children: React.ReactNode;
-}) {
+export default function ToastProvider({ children }: { children: React.ReactNode }) {
     const [toasts, setToasts] = useState<Toast[]>([]);
     const scheduledRef = useRef<Set<string>>(new Set());
 
     const removeToast = useCallback((id: string) => {
-        setToasts((t) => t.filter((x) => x.id !== id));
+        setToasts((t) => t.filter(x => x.id !== id));
         scheduledRef.current.delete(id);
     }, []);
 
     const addToast = useCallback((toast: Omit<Toast, 'id'>) => {
-        const id = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+        const id = `${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
         const t: Toast = { id, ...toast };
         setToasts((s) => [t, ...s]);
         return id;
@@ -71,7 +55,7 @@ export default function ToastProvider({
 
     // Ensure auto-dismiss is scheduled for new toasts (robust across renders)
     useEffect(() => {
-        toasts.forEach((t) => {
+        toasts.forEach(t => {
             const dur = t.duration ?? 4000;
             if (dur <= 0) return;
             if (scheduledRef.current.has(t.id)) return;
@@ -83,27 +67,16 @@ export default function ToastProvider({
         });
     }, [toasts, removeToast]);
 
-    const value = useMemo(
-        () => ({ addToast, removeToast }),
-        [addToast, removeToast],
-    );
+    const value = useMemo(() => ({ addToast, removeToast }), [addToast, removeToast]);
 
     return (
         <ToastContext.Provider value={value}>
             {children}
-            <div className="fixed top-4 right-4 z-[9999] flex max-w-sm flex-col gap-2">
-                {toasts.map((t) => (
-                    <div
-                        key={t.id}
-                        className={`flex items-start justify-between gap-3 rounded px-4 py-2 text-sm shadow ${t.type === 'success' ? 'bg-emerald-600 text-white' : t.type === 'error' ? 'bg-red-600 text-white' : 'border bg-stone-50 text-stone-800'}`}
-                    >
+            <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-2 max-w-sm">
+                {toasts.map(t => (
+                    <div key={t.id} className={`rounded shadow px-4 py-2 text-sm flex items-start justify-between gap-3 ${t.type === 'success' ? 'bg-emerald-600 text-white' : t.type === 'error' ? 'bg-red-600 text-white' : 'bg-stone-50 text-stone-800 border'}`}>
                         <div className="flex-1">{t.message}</div>
-                        <button
-                            onClick={() => removeToast(t.id)}
-                            className="ml-3 text-white opacity-90 hover:opacity-100"
-                        >
-                            ✕
-                        </button>
+                        <button onClick={() => removeToast(t.id)} className="text-white opacity-90 hover:opacity-100 ml-3">✕</button>
                     </div>
                 ))}
             </div>

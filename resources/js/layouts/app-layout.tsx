@@ -1,6 +1,7 @@
 import AppLayoutTemplate from '@/layouts/app/app-sidebar-layout';
 import { type BreadcrumbItem } from '@/types';
 import { type ReactNode } from 'react';
+import ToastProvider from '@/components/ToastProvider';
 
 interface AppLayoutProps {
     children: ReactNode;

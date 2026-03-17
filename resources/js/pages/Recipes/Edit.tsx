@@ -1,8 +1,8 @@
-import RecipeForm from '@/components/Recipes/RecipeForm';
-import AppLayout from '@/layouts/app-layout';
-import { recipesIndex, recipesUpdate } from '@/routes';
-import { Head, router, useForm } from '@inertiajs/react';
 import React from 'react';
+import { Head, useForm, router } from '@inertiajs/react';
+import AppLayout from '@/layouts/app-layout';
+import RecipeForm from '@/components/Recipes/RecipeForm';
+import { recipesUpdate, recipesIndex } from '@/routes';
 
 interface Props {
     recipe: {
@@ -10,46 +10,33 @@ interface Props {
         code: string;
         name: string;
         description: string | null;
-        yield: number;
-        unit_id: number;
+        yield_quantity: number;
+        yield_unit_id: number;
         is_active: boolean;
         ingredients: Array<{
             id?: number;
             ingredient_id: number;
             quantity: number;
             unit_id: number;
-            pivot?: {
-                quantity: number;
-                unit_id: number;
-            };
         }>;
     };
-    ingredients: {
-        id: number;
-        name: string;
-        default_unit_id: number;
-        default_unit_symbol: string;
-    }[];
+    ingredients: { id: number; name: string; default_unit_id: number; default_unit_symbol: string }[];
     units: { id: number; name: string; symbol: string }[];
 }
 
 export default function Edit({ recipe, ingredients, units }: Props) {
     const { data, setData, patch, processing, errors } = useForm({
-        code: recipe.code || '',
+        code: recipe.code,
         name: recipe.name,
         description: recipe.description || '',
-        yield: recipe.yield.toString(),
-        unit_id: recipe.unit_id.toString(),
+        yield_quantity: recipe.yield_quantity.toString(),
+        yield_unit_id: recipe.yield_unit_id.toString(),
         is_active: recipe.is_active,
-        ingredients: recipe.ingredients.map((ing) => ({
+        ingredients: recipe.ingredients.map(ing => ({
             id: ing.id,
-            ingredient_id: ing.id?.toString(),
-            quantity: ing.pivot
-                ? ing.pivot.quantity.toString()
-                : ing.quantity.toString(),
-            unit_id: ing.pivot
-                ? ing.pivot.unit_id.toString()
-                : ing.unit_id.toString(),
+            ingredient_id: ing.ingredient_id.toString(),
+            quantity: ing.quantity.toString(),
+            unit_id: ing.unit_id.toString(),
         })),
     });
 
@@ -61,20 +48,11 @@ export default function Edit({ recipe, ingredients, units }: Props) {
     };
 
     return (
-        <AppLayout
-            breadcrumbs={[
-                {
-                    title: 'Modifier recette',
-                    href: recipesUpdate.url(recipe.id),
-                },
-            ]}
-        >
+        <AppLayout breadcrumbs={[{ title: 'Modifier recette', href: recipesUpdate.url(recipe.id) }]}>
             <Head title="Modifier recette" />
-            <div className="mx-auto max-w-3xl px-4 py-8">
-                <div className="rounded-xl border border-stone-200 bg-white p-6">
-                    <h1 className="mb-6 text-xl font-semibold text-stone-900">
-                        Modifier la recette
-                    </h1>
+            <div className="max-w-3xl mx-auto py-8 px-4">
+                <div className="bg-white border border-stone-200 rounded-xl p-6">
+                    <h1 className="text-xl font-semibold text-stone-900 mb-6">Modifier la recette</h1>
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <RecipeForm
                             data={data}
@@ -87,14 +65,14 @@ export default function Edit({ recipe, ingredients, units }: Props) {
                             <button
                                 type="button"
                                 onClick={() => router.get(recipesIndex.url())}
-                                className="flex-1 rounded-lg border border-stone-200 px-4 py-2 text-sm text-stone-700 transition-colors hover:bg-stone-50"
+                                className="flex-1 px-4 py-2 border border-stone-200 text-stone-700 text-sm rounded-lg hover:bg-stone-50 transition-colors"
                             >
                                 Annuler
                             </button>
                             <button
                                 type="submit"
                                 disabled={processing}
-                                className="flex-1 rounded-lg bg-amber-500 px-4 py-2 text-sm text-white transition-colors hover:bg-amber-600 disabled:opacity-40"
+                                className="flex-1 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm rounded-lg transition-colors disabled:opacity-40"
                             >
                                 Mettre à jour
                             </button>

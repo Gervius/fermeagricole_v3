@@ -18,88 +18,38 @@ class AccountingService
      */
     public function createForInvoice(Invoice $invoice)
     {
+        // Récupérer les comptes
+        $clientAccount = Account::where('code', 'like', '411%')->first()
+            ?? Account::firstOrCreate(['code' => '411100'], ['name' => 'Clients', 'type' => 'asset']);
+        $salesAccount = Account::where('code', 'like', '701%')->first()
+            ?? Account::firstOrCreate(['code' => '701000'], ['name' => 'Ventes de produits', 'type' => 'revenue']);
+
         // Créer le voucher (brouillon)
         $voucher = JournalVoucher::create([
             'voucher_number' => null,
             'status' => 'draft',
             'date' => $invoice->date,
-            'description' => ($invoice->type === 'purchase' ? "Achat - Facture n° " : "Vente - Facture n° ") . $invoice->number,
+            'description' => "Vente - Facture n° " . $invoice->number,
             'source_id' => $invoice->id,
             'source_type' => Invoice::class,
             'created_by' => $invoice->approved_by ?? auth()->id(),
         ]);
 
-        if ($invoice->type === 'purchase') {
-            $supplierAccount = Account::where('code', 'like', '401%')->first()
-                ?? Account::firstOrCreate(['code' => '401100'], ['name' => 'Fournisseurs', 'type' => 'liability']);
-            $purchasesAccount = Account::where('code', 'like', '601%')->first()
-                ?? Account::firstOrCreate(['code' => '601000'], ['name' => 'Achats', 'type' => 'expense']);
+        // Débit client
+        $voucher->entries()->create([
+            'account_id' => $clientAccount->id,
+            'debit' => $invoice->total,
+            'credit' => 0,
+            'description' => "Créance Client - " . $invoice->customer_name,
+        ]);
 
-            // Débit Achat (HT)
-            $voucher->entries()->create([
-                'account_id' => $purchasesAccount->id,
-                'debit' => $invoice->subtotal,
-                'credit' => 0,
-                'description' => "Achat HT - Facture n° " . $invoice->number,
-            ]);
-
-            // Débit TVA (si applicable)
-            if ($invoice->tax_amount > 0) {
-                $vatAccount = Account::where('code', 'like', '445%')->first()
-                    ?? Account::firstOrCreate(['code' => '445200'], ['name' => 'TVA récupérable sur achats', 'type' => 'asset']);
-
-                $voucher->entries()->create([
-                    'account_id' => $vatAccount->id,
-                    'debit' => $invoice->tax_amount,
-                    'credit' => 0,
-                    'description' => "TVA récupérable - Facture n° " . $invoice->number,
-                ]);
-            }
-
-            // Crédit Fournisseur
-            $voucher->entries()->create([
-                'account_id' => $supplierAccount->id,
-                'debit' => 0,
-                'credit' => $invoice->total,
-                'description' => "Dette Fournisseur - " . $invoice->customer_name,
-                'lettering_code' => $invoice->number, // Clé de lettrage
-            ]);
-        } else {
-            $clientAccount = Account::where('code', 'like', '411%')->first()
-                ?? Account::firstOrCreate(['code' => '411100'], ['name' => 'Clients', 'type' => 'asset']);
-            $salesAccount = Account::where('code', 'like', '701%')->first()
-                ?? Account::firstOrCreate(['code' => '701000'], ['name' => 'Ventes de produits', 'type' => 'revenue']);
-
-            // Débit client
-            $voucher->entries()->create([
-                'account_id' => $clientAccount->id,
-                'debit' => $invoice->total,
-                'credit' => 0,
-                'description' => "Créance Client - " . $invoice->customer_name,
-                'lettering_code' => $invoice->number, // Clé de lettrage
-            ]);
-
-            // Crédit vente (HT)
-            $voucher->entries()->create([
-                'account_id' => $salesAccount->id,
-                'debit' => 0,
-                'credit' => $invoice->subtotal,
-                'description' => "Vente HT - Facture n° " . $invoice->number,
-            ]);
-
-            // Crédit TVA (si applicable)
-            if ($invoice->tax_amount > 0) {
-                $vatAccount = Account::where('code', 'like', '443%')->first()
-                    ?? Account::firstOrCreate(['code' => '443100'], ['name' => 'TVA facturée', 'type' => 'liability']);
-
-                $voucher->entries()->create([
-                    'account_id' => $vatAccount->id,
-                    'debit' => 0,
-                    'credit' => $invoice->tax_amount,
-                    'description' => "TVA facturée - Facture n° " . $invoice->number,
-                ]);
-            }
-        }
+        // Crédit vente
+        $voucher->entries()->create([
+            'account_id' => $salesAccount->id,
+            'debit' => 0,
+            'credit' => $invoice->total,
+            'description' => "Vente - Facture n° " . $invoice->number,
+        ]);
 
         // Gérer les mouvements de stock pour les articles
         foreach ($invoice->items as $item) {
@@ -161,9 +111,11 @@ class AccountingService
 
         // Comptes (à adapter selon votre plan comptable)
         $cashAccount = Account::where('code', 'like', $methodToAccount[$payment->method])->first();
+        $clientAccount = Account::where('code', 'like', '411%')->first();
         
-        if (!$cashAccount) {
-            throw new \Exception("Compte de trésorerie non configuré.");
+
+        if (!$cashAccount || !$clientAccount) {
+            throw new \Exception("Comptes de trésorerie ou client non configurés.");
         }
 
         $voucher = JournalVoucher::create([
@@ -176,51 +128,21 @@ class AccountingService
             'status' => 'draft', // ou 'posted' si vous voulez directement valider
         ]);
 
-        if ($invoice->type === 'purchase') {
-            $supplierAccount = Account::where('code', 'like', '401%')->first();
-            if (!$supplierAccount) {
-                throw new \Exception("Compte fournisseur non configuré.");
-            }
+        // Débit trésorerie
+        $voucher->entries()->create([
+            'account_id' => $cashAccount->id,
+            'debit' => $payment->amount,
+            'credit' => 0,
+            'description' => "Encaissement via {$payment->method}",
+        ]);
 
-            // Débit fournisseur (lettrage)
-            $voucher->entries()->create([
-                'account_id' => $supplierAccount->id,
-                'debit' => $payment->amount,
-                'credit' => 0,
-                'description' => "Règlement fournisseur facture {$invoice->number}",
-                'lettering_code' => $invoice->number, // Clé de lettrage
-            ]);
-
-            // Crédit trésorerie
-            $voucher->entries()->create([
-                'account_id' => $cashAccount->id,
-                'debit' => 0,
-                'credit' => $payment->amount,
-                'description' => "Décaissement via {$payment->method}",
-            ]);
-        } else {
-            $clientAccount = Account::where('code', 'like', '411%')->first();
-            if (!$clientAccount) {
-                throw new \Exception("Compte client non configuré.");
-            }
-
-            // Débit trésorerie
-            $voucher->entries()->create([
-                'account_id' => $cashAccount->id,
-                'debit' => $payment->amount,
-                'credit' => 0,
-                'description' => "Encaissement via {$payment->method}",
-            ]);
-
-            // Crédit client (lettrage)
-            $voucher->entries()->create([
-                'account_id' => $clientAccount->id,
-                'debit' => 0,
-                'credit' => $payment->amount,
-                'description' => "Règlement facture {$invoice->number}",
-                'lettering_code' => $invoice->number, // Clé de lettrage
-            ]);
-        }
+        // Crédit client
+        $voucher->entries()->create([
+            'account_id' => $clientAccount->id,
+            'debit' => 0,
+            'credit' => $payment->amount,
+            'description' => "Règlement facture {$invoice->number}",
+        ]);
     }
 
     /**
@@ -231,38 +153,14 @@ class AccountingService
         // Trouver le voucher associé (s'il existe)
         $voucher = JournalVoucher::where('source_id', $invoice->id)
             ->where('source_type', Invoice::class)
-            ->where('status', '!=', 'cancelled')
             ->first();
 
         if ($voucher) {
-            if ($voucher->status === 'draft') {
-                // Si c'est un brouillon, on peut simplement l'annuler/le supprimer
-                $voucher->update(['status' => 'cancelled']);
-            } else {
-                // S'il est posté, on crée une contre-passation (Syscohada)
-                $reversingVoucher = JournalVoucher::create([
-                    'voucher_number' => JournalVoucher::generateVoucherNumber(),
-                    'status' => 'posted', // Ou draft si nécessite validation
-                    'date' => now(),
-                    'description' => "Contre-passation - Annulation Facture n° " . $invoice->number,
-                    'source_id' => $invoice->id,
-                    'source_type' => Invoice::class,
-                    'created_by' => auth()->id(),
-                ]);
+            // Option 1 : Marquer le voucher comme annulé
+            $voucher->update(['status' => 'cancelled']); // à ajouter dans la migration si besoin
 
-                // Inverser les écritures (débits deviennent crédits, etc.)
-                foreach ($voucher->entries as $entry) {
-                    $reversingVoucher->entries()->create([
-                        'account_id' => $entry->account_id,
-                        'debit' => $entry->credit,  // Inversion
-                        'credit' => $entry->debit,  // Inversion
-                        'description' => "Annulation: " . $entry->description,
-                    ]);
-                }
-
-                // Marquer l'original comme annulé pour ne pas le re-traiter
-                $voucher->update(['status' => 'cancelled']);
-            }
+            // Option 2 : Créer des écritures inverses
+            // ...
         }
 
         // Inverser les mouvements de stock
