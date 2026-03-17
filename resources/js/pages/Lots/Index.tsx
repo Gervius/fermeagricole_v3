@@ -1,5 +1,4 @@
-{
-    /**
+{/**
 import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
 import AppLayout from '@/layouts/app-layout';
 import { generation, generationPost } from '@/routes';
@@ -212,11 +211,9 @@ function PerformancePonte({tauxPonte}: {tauxPonte: number}){
   );
 }
 
-*/
-}
+*/}
 
-{
-    /*
+{/*
 
 
 interface props {
@@ -323,5 +320,4 @@ function FormGeneration({ batiments,  hideForm }: props){
     </div>
   );
 }
-**/
-}
+**/}

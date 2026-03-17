@@ -9,6 +9,7 @@ use App\Http\Requests\RejectDailyRecordRequest;
 use App\Models\DailyRecord;
 use App\Models\Flock;
 use App\Models\EggStock;
+use App\Models\Recipe;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -33,7 +34,7 @@ class DailyRecordController extends Controller
         }
 
         $records = $flock->dailyRecords()
-            ->with(['creator', 'approver'])
+            ->with(['creator', 'approver', 'feedType'])
             ->orderBy('date', 'desc')
             ->paginate(5)
             ->through(fn ($record) => [
@@ -41,6 +42,12 @@ class DailyRecordController extends Controller
                 'date' => $record->date->format('Y-m-d'),
                 'losses' => $record->losses,
                 'eggs' => $record->eggs,
+                'feed_type_name' => $record->feedType ? $record->feedType->name : null,
+                'feed_consumed' => $record->feed_consumed,
+                'water_consumed' => $record->water_consumed,
+                'avg_feed_per_bird' => $record->avg_feed_per_bird,
+                'avg_water_per_bird' => $record->avg_water_per_bird,
+                'theoretical_norm' => $record->theoretical_norm,
                 'notes' => $record->notes,
                 'status' => $record->status,
                 'created_by' => $record->creator->name,
@@ -59,9 +66,12 @@ class DailyRecordController extends Controller
             ]);
         }
 
+        $recipes = Recipe::select('id', 'name')->get();
+
         return Inertia::render('Flocks/Partials/DailyRecords', [
             'records' => $records,
             'flock' => $flock->only('id', 'name'),
+            'recipes' => $recipes,
         ]);
     }
 
@@ -84,6 +94,12 @@ class DailyRecordController extends Controller
                 'date' => $record->date->format('Y-m-d'),
                 'losses' => $record->losses,
                 'eggs' => $record->eggs,
+                'feed_type_name' => $record->feedType ? $record->feedType->name : null,
+                'feed_consumed' => $record->feed_consumed,
+                'water_consumed' => $record->water_consumed,
+                'avg_feed_per_bird' => $record->avg_feed_per_bird,
+                'avg_water_per_bird' => $record->avg_water_per_bird,
+                'theoretical_norm' => $record->theoretical_norm,
                 'notes' => $record->notes,
                 'status' => $record->status,
                 'created_by' => $record->creator->name,
@@ -156,7 +172,7 @@ class DailyRecordController extends Controller
     public function indexForModal(Flock $flock, Request $request)
     {
         $records = $flock->dailyRecords()
-        ->with(['creator', 'approver'])
+        ->with(['creator', 'approver', 'feedType'])
         ->orderBy('date', 'desc')
         ->paginate(20)
         ->through(fn ($record) => [
@@ -164,6 +180,12 @@ class DailyRecordController extends Controller
             'date' => $record->date->format('Y-m-d'),
             'losses' => $record->losses,
             'eggs' => $record->eggs,
+            'feed_type_name' => $record->feedType ? $record->feedType->name : null,
+            'feed_consumed' => $record->feed_consumed,
+            'water_consumed' => $record->water_consumed,
+            'avg_feed_per_bird' => $record->avg_feed_per_bird,
+            'avg_water_per_bird' => $record->avg_water_per_bird,
+            'theoretical_norm' => $record->theoretical_norm,
             'notes' => $record->notes,
             'status' => $record->status,
             'created_by' => $record->creator->name,
@@ -174,9 +196,12 @@ class DailyRecordController extends Controller
             'can_reject' => auth()->user()->can('reject', $record),
         ]);
 
+        $recipes = Recipe::select('id', 'name')->get();
+
         return Inertia::render('Flocks/Partials/RecordsOnly', [
             'records' => $records,
             'flock' => $flock->only('id', 'name'),
+            'recipes' => $recipes,
         ]);
     }
 }

@@ -31,7 +31,6 @@ class InvoiceController extends Controller
 
         $invoices = $query->latest()->paginate(15)->through(fn($invoice) => [
             'id' => $invoice->id,
-            'type' => $invoice->type,
             'number' => $invoice->number,
             'customer_name' => $invoice->customer_name,
             'customer_phone' => $invoice->partner?->phone, // si relation partner
@@ -84,12 +83,8 @@ class InvoiceController extends Controller
         return Inertia::render('Invoices/Create', [
             'import' => $import,
             'activeFlocks' => Flock::active()->get(['id', 'name']),
-            'ingredients' => \App\Models\Ingredient::where('is_active', true)->get(['id', 'name']),
             'customers' => Partner::where('is_active', true)
                                               ->whereIn('type', ['customer', 'both'])
-                                              ->get(['id', 'name']),
-            'suppliers' => Partner::where('is_active', true)
-                                              ->whereIn('type', ['supplier', 'both'])
                                               ->get(['id', 'name']),
             'nextInvoiceNumber' => 'FAC-' . date('Ymd') . '-' . str_pad(Invoice::count() + 1, 4, '0', STR_PAD_LEFT)
         ]);
@@ -101,7 +96,6 @@ class InvoiceController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'type' => 'required|in:sale,purchase',
             'number' => 'required|unique:invoices',
             'partner_id' => 'required|exists:partners,id',
             'date' => 'required|date',
@@ -120,7 +114,6 @@ class InvoiceController extends Controller
             $partner = Partner::find($validated['partner_id']);
 
             $invoice = Invoice::create([
-                'type' => $validated['type'],
                 'number' => $validated['number'],
                 'partner_id' => $validated['partner_id'],
                 'customer_name' => $partner->name, // Conservé pour historique au cas où le partenaire est supprimé
@@ -135,11 +128,11 @@ class InvoiceController extends Controller
             foreach ($validated['items'] as $item) {
                 $invoice->items()->create([
                     'description' => $item['description'],
-                    'quantity' => (float) $item['quantity'],
-                    'unit_price' => (float) $item['unit_price'],
-                    'total' => (float) $item['quantity'] * (float) $item['unit_price'],
-                    'itemable_id' => $item['itemable_id'] ? (int) $item['itemable_id'] : null,
-                    'itemable_type' => $item['itemable_type'] ?: null,
+                    'quantity' => $item['quantity'],
+                    'unit_price' => $item['unit_price'],
+                    'total' => $item['quantity'] * $item['unit_price'],
+                    'itemable_id' => $item['itemable_id'],
+                    'itemable_type' => $item['itemable_type'],
                 ]);
             }
         });
@@ -158,7 +151,7 @@ class InvoiceController extends Controller
         
         DB::transaction(function () use ($invoice) {
             foreach ($invoice->items as $item) {
-                if ($invoice->type === 'sale' && $item->itemable_type === Flock::class) {
+                if ($item->itemable_type === Flock::class) {
                     $flock = Flock::find($item->itemable_id);
                     if (!$flock || !$flock->canSell($item->quantity)) {
                         throw new \Exception("Stock insuffisant pour le lot {$flock->name}. Disponible : {$flock->calculated_quantity}, demandé : {$item->quantity}");
@@ -183,13 +176,12 @@ class InvoiceController extends Controller
         $partner = $invoice->partner;
         $statement = $partner ? $partner->getStatement() : [];
 
-        $invoiceData = $invoice->toArray();
-        $invoiceData['can_approve'] = auth()->user()->can('approve', $invoice);
-        $invoiceData['can_cancel'] = auth()->user()->can('cancel', $invoice);
-        $invoiceData['can_add_payment'] = $invoice->can_add_payment;
-
         return Inertia::render('Invoices/Show', [
-            'invoice' => $invoiceData,
+            'invoice' => array_merge($invoice->toArray(), [
+                'can_approve' => auth()->user()->can('approve', $invoice),
+                'can_cancel' => auth()->user()->can('cancel', $invoice),
+                'can_add_payment' => $invoice->can_add_payment,
+            ]),
             'remaining_amount' => $invoice->total - $invoice->payments()->sum('amount'),
             'partner' => $partner ? [
                 'id' => $partner->id,

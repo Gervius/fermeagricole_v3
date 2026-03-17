@@ -15,10 +15,7 @@ export function NavMain({ groups = [] }: { groups: NavGroup[] }) {
     return (
         <>
             {groups.map((group) => (
-                <SidebarGroup
-                    key={group.title}
-                    className="mt-4 px-2 py-0 first:mt-0"
-                >
+                <SidebarGroup key={group.title} className="px-2 py-0 mt-4 first:mt-0">
                     <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
                     <SidebarMenu>
                         {group.items.map((item) => {
@@ -33,13 +30,7 @@ export function NavMain({ groups = [] }: { groups: NavGroup[] }) {
                             }
 
                             // isActive est vrai si le path exact match ou s'il commence par ce path suivi d'un slash (pour les sous-vues de ressources /edit /show)
-                            const isActive =
-                                currentPath === expectedPath ||
-                                currentPath.startsWith(
-                                    expectedPath === '/'
-                                        ? '/#ne_jamais_matcher#'
-                                        : expectedPath + '/',
-                                );
+                            const isActive = currentPath === expectedPath || currentPath.startsWith(expectedPath === '/' ? '/#ne_jamais_matcher#' : expectedPath + '/');
 
                             return (
                                 <SidebarMenuItem key={item.title}>
