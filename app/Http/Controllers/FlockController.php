@@ -30,6 +30,8 @@ class FlockController extends Controller
             ->when($request->building_id, fn($q, $id) => $q->where('building_id', $id))
             ->when($request->search, fn($q, $search) => $q->where('name', 'like', "%{$search}%"));
 
+        $recipes = \App\Models\Recipe::select('id', 'name')->orderBy('name')->get();
+
         $flocks = $query->latest()->paginate(15)->through(fn($flock) => [
             'id' => $flock->id,
             'name' => $flock->name,
@@ -50,6 +52,7 @@ class FlockController extends Controller
         return Inertia::render('Flocks/Index', [
             'flocks' => $flocks,
             'buildings' => Building::select('id', 'name')->get(),
+            'recipes' => $recipes,
             'filters' => $request->only(['status', 'building_id', 'search']),
             // Chargement paresseux pour le suivi journalier
             'dailyRecords' => Inertia::lazy(fn() => 
@@ -188,8 +191,11 @@ class FlockController extends Controller
         // Analyse de rentabilité financière
         $financialAnalysis = $profitabilityService->calculateForFlock($flock);
 
+        $recipes = \App\Models\Recipe::select('id', 'name')->orderBy('name')->get();
+
         // On transforme le lot en un "Cockpit" de données
         return Inertia::render('Flocks/Show', [
+            'recipes' => $recipes,
             'flock' => [
                 'id' => $flock->id,
                 'name' => $flock->name,
