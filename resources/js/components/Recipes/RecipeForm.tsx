@@ -2,7 +2,6 @@ import React from 'react';
 import RecipeIngredients from './RecipeIngredients';
 
 interface RecipeFormData {
-    code: string;
     name: string;
     description: string;
     yield_quantity: string;
@@ -26,31 +25,17 @@ interface Props {
 export default function RecipeForm({ data, setData, errors, ingredients, units }: Props) {
     return (
         <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <label className="block text-xs font-medium text-stone-600 mb-1.5">Code *</label>
-                    <input
-                        type="text"
-                        value={data.code}
-                        onChange={e => setData('code', e.target.value)}
-                        className="w-full px-3.5 py-2 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
-                        placeholder="Ex: REC-001"
-                        required
-                    />
-                    {errors.code && <p className="text-red-500 text-xs mt-1">{errors.code}</p>}
-                </div>
-                <div>
-                    <label className="block text-xs font-medium text-stone-600 mb-1.5">Nom *</label>
-                    <input
-                        type="text"
-                        value={data.name}
-                        onChange={e => setData('name', e.target.value)}
-                        className="w-full px-3.5 py-2 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
-                        placeholder="Ex: Aliment pondeuse 18%"
-                        required
-                    />
-                    {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
-                </div>
+            <div>
+                <label className="block text-xs font-medium text-stone-600 mb-1.5">Nom *</label>
+                <input
+                    type="text"
+                    value={data.name}
+                    onChange={e => setData('name', e.target.value)}
+                    className="w-full px-3.5 py-2 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                    placeholder="Ex: Aliment pondeuse 18%"
+                    required
+                />
+                {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
             </div>
 
             <div>

@@ -7,17 +7,18 @@ import { recipesUpdate, recipesIndex } from '@/routes';
 interface Props {
     recipe: {
         id: number;
-        code: string;
         name: string;
         description: string | null;
-        yield_quantity: number;
-        yield_unit_id: number;
+        yield: number;
+        unit_id: number;
         is_active: boolean;
         ingredients: Array<{
             id?: number;
-            ingredient_id: number;
-            quantity: number;
-            unit_id: number;
+            pivot: {
+                ingredient_id: number;
+                quantity: number;
+                unit_id: number;
+            };
         }>;
     };
     ingredients: { id: number; name: string; default_unit_id: number; default_unit_symbol: string }[];
@@ -26,17 +27,16 @@ interface Props {
 
 export default function Edit({ recipe, ingredients, units }: Props) {
     const { data, setData, patch, processing, errors } = useForm({
-        code: recipe.code,
         name: recipe.name,
         description: recipe.description || '',
-        yield_quantity: recipe.yield_quantity.toString(),
-        yield_unit_id: recipe.yield_unit_id.toString(),
+        yield_quantity: recipe.yield.toString(),
+        yield_unit_id: recipe.unit_id.toString(),
         is_active: recipe.is_active,
         ingredients: recipe.ingredients.map(ing => ({
             id: ing.id,
-            ingredient_id: ing.ingredient_id.toString(),
-            quantity: ing.quantity.toString(),
-            unit_id: ing.unit_id.toString(),
+            ingredient_id: ing.pivot.ingredient_id.toString(),
+            quantity: ing.pivot.quantity.toString(),
+            unit_id: ing.pivot.unit_id.toString(),
         })),
     });
 

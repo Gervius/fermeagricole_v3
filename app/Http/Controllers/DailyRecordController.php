@@ -34,7 +34,7 @@ class DailyRecordController extends Controller
         }
 
         $records = $flock->dailyRecords()
-            ->with(['creator', 'approver', 'feedType'])
+            ->with(['creator', 'approver', 'feedType', 'flock'])
             ->orderBy('date', 'desc')
             ->paginate(5)
             ->through(fn ($record) => [
@@ -172,7 +172,7 @@ class DailyRecordController extends Controller
     public function indexForModal(Flock $flock, Request $request)
     {
         $records = $flock->dailyRecords()
-        ->with(['creator', 'approver', 'feedType'])
+        ->with(['creator', 'approver', 'feedType', 'flock'])
         ->orderBy('date', 'desc')
         ->paginate(20)
         ->through(fn ($record) => [
