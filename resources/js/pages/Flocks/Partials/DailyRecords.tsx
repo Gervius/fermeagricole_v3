@@ -66,7 +66,7 @@ const RECORD_STATUS_META: Record<RecordStatus, { label: string; classes: string 
     rejected: { label: 'Rejeté',     classes: 'bg-red-100 text-red-600' },
 };
 
-export default function DailyRecords({ initialFlock, onClose, onFlockUpdate }: { initialFlock?: Flock, onClose: () => void, onFlockUpdate: (data: { id: number, current_quantity: number }) => void  }) {
+export default function DailyRecords({ initialFlock, onClose, onFlockUpdate, recipes: externalRecipes }: { initialFlock?: Flock, onClose: () => void, onFlockUpdate: (data: { id: number, current_quantity: number }) => void, recipes?: Recipe[]  }) {
     const { props } = usePage<PageProps>(); // on garde pour les autres usages si besoin, mais on n'y fait pas directement dans onSuccess
     const flock = initialFlock;
     const { addToast } = useToasts();
@@ -90,7 +90,7 @@ export default function DailyRecords({ initialFlock, onClose, onFlockUpdate }: {
     const [rejectingId, setRejectingId] = useState<number | null>(null);
     const [rejectionReason, setRejectionReason] = useState('');
 
-    const recipes = props.recipes || [];
+    const recipes = externalRecipes || props.recipes || [];
 
     // Chargement initial
     const loadRecords = (page = 1) => {
@@ -98,7 +98,7 @@ export default function DailyRecords({ initialFlock, onClose, onFlockUpdate }: {
         setLoading(true);
         setError(null);
         router.reload({
-            only: ['dailyRecords'],
+            only: ['dailyRecords', 'recipes'],
             data: { flock_id: flock.id, records_page: page },
             preserveState: true,
             preserveScroll: true,

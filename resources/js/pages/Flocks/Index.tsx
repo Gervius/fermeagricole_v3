@@ -99,6 +99,7 @@ interface PaginatedFlocks {
 interface PageProps {
     flocks: PaginatedFlocks;
     buildings: Building[];
+    recipes: { id: number, name: string }[];
     filters: Filters;
     flash?: { success?: string; error?: string };
     [key: string]: any;
@@ -126,7 +127,7 @@ const RECORD_STATUS_META: Record<RecordStatus, { label: string; classes: string 
 // Composant principal
 // ─────────────────────────────────────────────
 
-export default function FlockManagement({flocks, buildings, filters, flash}: PageProps) {
+export default function FlockManagement({flocks, buildings, filters, flash, recipes = []}: PageProps) {
     //const { flocks, buildings, filters, flash, errors } = usePage<PageProps>().props;
 
     // ── État local (UI uniquement) ──────────────
@@ -703,7 +704,7 @@ export default function FlockManagement({flocks, buildings, filters, flash}: Pag
                     wide
                 >
                         <div>
-                            <DailyRecords initialFlock={selectedFlock!} onClose={() => setShowTrackingModal(false)} onFlockUpdate={handleFlockUpdate} />
+                            <DailyRecords initialFlock={selectedFlock!} onClose={() => setShowTrackingModal(false)} onFlockUpdate={handleFlockUpdate} recipes={recipes} />
                         </div>
                 </Modal>
             )}
