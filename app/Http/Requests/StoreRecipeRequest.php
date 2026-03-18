@@ -16,8 +16,8 @@ class StoreRecipeRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'yield' => 'required|numeric|min:0',
-            'unit_id' => 'required|exists:units,id',
+            'yield_quantity' => 'required|numeric|min:0',
+            'yield_unit_id' => 'required|exists:units,id',
             'is_active' => 'boolean',
             'ingredients' => 'required|array|min:1',
             'ingredients.*.ingredient_id' => 'required|exists:ingredients,id',

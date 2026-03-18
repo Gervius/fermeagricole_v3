@@ -14,11 +14,10 @@ interface Props {
 
 export default function Create({ ingredients, units }: Props) {
     const { data, setData, post, processing, errors } = useForm({
-        code: '',
         name: '',
         description: '',
-        yield: '',
-        unit_id: '',
+        yield_quantity: '',
+        yield_unit_id: '',
         is_active: true,
         ingredients: [],
     });

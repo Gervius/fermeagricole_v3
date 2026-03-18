@@ -34,8 +34,8 @@ class RecipeController extends Controller
         $recipe = Recipe::create([
             'name' => $request->name,
             'description' => $request->description,
-            'yield' => $request->yield, // au lieu de 'yield'
-            'unit_id' => $request->unit_id,   // au lieu de 'unit_id'
+            'yield' => $request->yield_quantity, // Correspond au champ validé
+            'unit_id' => $request->yield_unit_id,   // Correspond au champ validé
             'is_active' => $request->is_active ?? true,
         ]);
 
@@ -64,7 +64,13 @@ class RecipeController extends Controller
 
     public function update(UpdateRecipeRequest $request, Recipe $recipe)
     {
-        $recipe->update($request->only(['name', 'description', 'yield', 'unit_id', 'is_active']));
+        $recipe->update([
+            'name' => $request->name,
+            'description' => $request->description,
+            'yield' => $request->yield_quantity,
+            'unit_id' => $request->yield_unit_id,
+            'is_active' => $request->is_active ?? true,
+        ]);
 
         // Synchroniser les ingrédients
         $syncData = [];
@@ -76,12 +82,12 @@ class RecipeController extends Controller
         }
         $recipe->ingredients()->sync($syncData);
 
-        return redirect()->route('recipes.index')->with('success', 'Recette mise à jour.');
+        return redirect()->route('recipesIndex')->with('success', 'Recette mise à jour.');
     }
 
     public function destroy(Recipe $recipe)
     {
         $recipe->delete();
-        return redirect()->route('recipes.index')->with('success', 'Recette supprimée.');
+        return redirect()->route('recipesIndex')->with('success', 'Recette supprimée.');
     }
 }
