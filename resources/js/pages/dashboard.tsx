@@ -6,6 +6,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { TrendingUp, TrendingDown, Egg, DollarSign, AlertCircle, Activity, Building, Bell } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { formatCurrency } from '@/lib/utils';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -61,7 +62,7 @@ export default function Dashboard({ filters, buildings, kpis, alerts, production
         },
         {
           label: 'Revenus ce mois',
-          value: `${kpis.monthly_revenue.toLocaleString('fr-FR')} FCFA`,
+          value: formatCurrency(kpis.monthly_revenue),
           icon: DollarSign,
           color: 'blue',
         },
@@ -196,10 +197,10 @@ export default function Dashboard({ filters, buildings, kpis, alerts, production
                                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                                     <XAxis dataKey="month" stroke="#6b7280" />
                                     <YAxis stroke="#6b7280" />
-                                    <Tooltip formatter={(val: number) => `${val.toLocaleString('fr-FR')} FCFA`} />
+                                    <Tooltip formatter={(val: number) => formatCurrency(val)} />
                                     <Legend />
-                                    <Bar dataKey="sales" fill="#10b981" name="Ventes (FCFA)" />
-                                    <Bar dataKey="expenses" fill="#ef4444" name="Charges (FCFA)" />
+                                    <Bar dataKey="sales" fill="#10b981" name="Ventes" />
+                                    <Bar dataKey="expenses" fill="#ef4444" name="Charges" />
                                 </BarChart>
                             ) : (
                                 <div className="flex h-full items-center justify-center text-stone-400">Chargement...</div>
