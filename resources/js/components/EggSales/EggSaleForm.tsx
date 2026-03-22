@@ -78,7 +78,7 @@ export default function EggSaleForm({ data, setData, errors, flocks, isEditing }
             </div>
 
             <div>
-                <label className="block text-xs font-medium text-stone-600 mb-1.5">Prix unitaire (€) *</label>
+                <label className="block text-xs font-medium text-stone-600 mb-1.5">Prix unitaire (FCFA) *</label>
                 <input
                     type="number"
                     min="0"

@@ -53,16 +53,16 @@ export default function JournalVoucherShow({ voucher }: VoucherShowPageProps) {
                                     <tr key={idx}>
                                         <td className="px-4 py-2 font-mono">{line.account_code} - {line.account_name}</td>
                                         <td className="px-4 py-2 text-stone-600">{line.description || '-'}</td>
-                                        <td className="px-4 py-2 text-right text-emerald-600">{line.debit > 0 ? line.debit.toLocaleString('fr-FR') + ' €' : '-'}</td>
-                                        <td className="px-4 py-2 text-right text-amber-600">{line.credit > 0 ? line.credit.toLocaleString('fr-FR') + ' €' : '-'}</td>
+                                        <td className="px-4 py-2 text-right text-emerald-600">{line.debit > 0 ? line.debit.toLocaleString('fr-FR') + ' FCFA' : '-'}</td>
+                                        <td className="px-4 py-2 text-right text-amber-600">{line.credit > 0 ? line.credit.toLocaleString('fr-FR') + ' FCFA' : '-'}</td>
                                     </tr>
                                 ))}
                             </tbody>
                             <tfoot className="bg-stone-50 font-medium">
                                 <tr>
                                     <td colSpan={2} className="px-4 py-2 text-right">Totaux :</td>
-                                    <td className="px-4 py-2 text-right">{totalDebit.toLocaleString('fr-FR')} €</td>
-                                    <td className="px-4 py-2 text-right">{totalCredit.toLocaleString('fr-FR')} €</td>
+                                    <td className="px-4 py-2 text-right">{totalDebit.toLocaleString('fr-FR')} FCFA</td>
+                                    <td className="px-4 py-2 text-right">{totalCredit.toLocaleString('fr-FR')} FCFA</td>
                                 </tr>
                             </tfoot>
                         </table>
