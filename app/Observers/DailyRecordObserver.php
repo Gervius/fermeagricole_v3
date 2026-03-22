@@ -4,7 +4,8 @@ namespace App\Observers;
 
 use App\Models\DailyRecord;
 use App\Models\EggMovement;
-use App\Models\StockMovement;
+use App\Models\StockMouvement;
+use App\Models\Ingredient;
 
 class DailyRecordObserver
 {
@@ -24,20 +25,26 @@ class DailyRecordObserver
             }
 
             if ($record->feed_consumed > 0 && $record->feed_type_id) {
-                StockMovement::create([
-                    'type' => 'out',
-                    'date' => $record->date,
-                    'recipe_id' => $record->feed_type_id,
-                    'quantity' => $record->feed_consumed,
-                    'unit_price' => $record->feedType ? $record->feedType->pmp : null,
-                    'reason' => 'daily_record',
-                    'reference' => 'RECORD-' . $record->id,
-                    'notes' => "Consommation du lot: " . $record->flock->name,
-                    'status' => 'approved',
-                    'created_by' => $record->approved_by,
-                    'approved_by' => $record->approved_by,
-                    'approved_at' => now(),
-                ]);
+                // Find the corresponding pseudo-ingredient for this recipe
+                $feedIngredient = Ingredient::where('reference', 'FEED-' . $record->feed_type_id)
+                                            ->orWhere('name', $record->feedType?->name)
+                                            ->first();
+
+                if ($feedIngredient) {
+                    StockMouvement::create([
+                        'ingredient_id' => $feedIngredient->id,
+                        'type' => 'out',
+                        'quantity' => $record->feed_consumed,
+                        'unit_id' => $feedIngredient->default_unit_id,
+                        'unit_price' => $feedIngredient->pmp, // Use PMP of the ingredient
+                        'reason' => "Consommation du lot: {$record->flock->name}",
+                        'reference' => 'RECORD-' . $record->id,
+                        'status' => 'approved',
+                        'created_by' => $record->approved_by,
+                        'approved_by' => $record->approved_by,
+                        'approved_at' => now(),
+                    ]);
+                }
             }
         }
     }
