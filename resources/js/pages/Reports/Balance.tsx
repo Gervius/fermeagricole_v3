@@ -3,6 +3,7 @@ import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { reportsBalance } from '@/routes';
 import { FileText } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils';
 
 
 interface BalanceLine {
@@ -20,11 +21,13 @@ interface BalanceReport {
 }
 
 interface BalancePageProps {
-    report: BalanceReport;
+    accounts: any[];
+    totalDebit: number;
+    totalCredit: number;
     filters: { start_date?: string; end_date?: string };
 }
 
-export default function BalanceReport({ report, filters }: BalancePageProps) {
+export default function BalanceReport({ accounts, totalDebit, totalCredit, filters }: BalancePageProps) {
     const [startDate, setStartDate] = useState(filters.start_date || '');
     const [endDate, setEndDate] = useState(filters.end_date || '');
 
@@ -111,12 +114,12 @@ export default function BalanceReport({ report, filters }: BalancePageProps) {
                                     <tr key={idx} className="hover:bg-stone-50">
                                         <td className="px-4 py-2 font-mono">{line.code}</td>
                                         <td className="px-4 py-2">{line.name}</td>
-                                        <td className="px-4 py-2 text-right">{line?.debit?.toLocaleString('fr-FR')} FCFA</td>
-                                        <td className="px-4 py-2 text-right">{line?.credit?.toLocaleString('fr-FR')} FCFA</td>
+                                        <td className="px-4 py-2 text-right">{formatCurrency(line?.debit || 0)}</td>
+                                        <td className="px-4 py-2 text-right">{formatCurrency(line?.credit || 0)}</td>
                                         <td className={`px-4 py-2 text-right font-medium ${line.balance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                                            {line.solde_debiteur ? line.solde_debiteur.toLocaleString('fr-FR') + ' FCFA (D)' : ''}
-                                            {line.solde_crediteur ? line.solde_crediteur.toLocaleString('fr-FR') + ' FCFA (C)' : ''}
-                                            {(!line.solde_debiteur && !line.solde_crediteur) ? '0 FCFA' : ''}
+                                            {line.solde_debiteur ? formatCurrency(line.solde_debiteur) + ' (D)' : ''}
+                                            {line.solde_crediteur ? formatCurrency(line.solde_crediteur) + ' (C)' : ''}
+                                            {(!line.solde_debiteur && !line.solde_crediteur) ? formatCurrency(0) : ''}
                                         </td>
                                     </tr>
                                 ))}
@@ -124,15 +127,15 @@ export default function BalanceReport({ report, filters }: BalancePageProps) {
                             <tfoot className="bg-stone-50 font-medium">
                                 <tr>
                                     <td colSpan={2} className="px-4 py-2 text-right">Totaux :</td>
-                                    <td className="px-4 py-2 text-right">{totalDebit?.toLocaleString('fr-FR')} FCFA</td>
-                                    <td className="px-4 py-2 text-right">{totalCredit?.toLocaleString('fr-FR')} FCFA</td>
+                                    <td className="px-4 py-2 text-right">{formatCurrency(totalDebit || 0)}</td>
+                                    <td className="px-4 py-2 text-right">{formatCurrency(totalCredit || 0)}</td>
                                     <td className="px-4 py-2 text-right">—</td>
                                 </tr>
                             </tfoot>
                         </table>
                     </div>
 
-                    {report?.accounts?.length === 0 && (
+                    {accounts?.length === 0 && (
                         <p className="text-center text-stone-400 py-8">Aucune écriture pour la période sélectionnée.</p>
                     )}
                 </div>

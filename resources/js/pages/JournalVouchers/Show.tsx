@@ -2,6 +2,8 @@ import React from 'react';
 import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { journalVouchersIndex } from '@/routes';
+import { formatCurrency } from '@/lib/utils';
+import { t } from '@/lib/i18n';
 
 export default function JournalVoucherShow({ voucher }: VoucherShowPageProps) {
     const totalDebit = voucher.entries.reduce((sum, e) => sum + e.debit, 0);
@@ -53,16 +55,16 @@ export default function JournalVoucherShow({ voucher }: VoucherShowPageProps) {
                                     <tr key={idx}>
                                         <td className="px-4 py-2 font-mono">{line.account_code} - {line.account_name}</td>
                                         <td className="px-4 py-2 text-stone-600">{line.description || '-'}</td>
-                                        <td className="px-4 py-2 text-right text-emerald-600">{line.debit > 0 ? line.debit.toLocaleString('fr-FR') + ' FCFA' : '-'}</td>
-                                        <td className="px-4 py-2 text-right text-amber-600">{line.credit > 0 ? line.credit.toLocaleString('fr-FR') + ' FCFA' : '-'}</td>
+                                        <td className="px-4 py-2 text-right text-emerald-600">{line.debit > 0 ? formatCurrency(line.debit) : '-'}</td>
+                                        <td className="px-4 py-2 text-right text-amber-600">{line.credit > 0 ? formatCurrency(line.credit) : '-'}</td>
                                     </tr>
                                 ))}
                             </tbody>
                             <tfoot className="bg-stone-50 font-medium">
                                 <tr>
                                     <td colSpan={2} className="px-4 py-2 text-right">Totaux :</td>
-                                    <td className="px-4 py-2 text-right">{totalDebit.toLocaleString('fr-FR')} FCFA</td>
-                                    <td className="px-4 py-2 text-right">{totalCredit.toLocaleString('fr-FR')} FCFA</td>
+                                    <td className="px-4 py-2 text-right">{formatCurrency(totalDebit)}</td>
+                                    <td className="px-4 py-2 text-right">{formatCurrency(totalCredit)}</td>
                                 </tr>
                             </tfoot>
                         </table>

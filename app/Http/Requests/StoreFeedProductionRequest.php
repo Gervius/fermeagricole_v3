@@ -12,6 +12,18 @@ class StoreFeedProductionRequest extends FormRequest
         return $this->user()->can('create feed productions');
     }
 
+    protected function prepareForValidation()
+    {
+        // The frontend form sends 'quantity' and we map it to 'quantity_produced'
+        // We also need to get the unit from the recipe if not provided
+        $recipe = \App\Models\Recipe::find($this->input('recipe_id'));
+
+        $this->merge([
+            'quantity_produced' => $this->input('quantity_produced', $this->input('quantity')),
+            'unit_id' => $this->input('unit_id', $recipe ? $recipe->unit_id : null),
+        ]);
+    }
+
     public function rules(): array
     {
         return [

@@ -2,6 +2,7 @@ import React from 'react';
 import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { stockMovementsIndex } from '@/routes';
+import { formatCurrency } from '@/lib/utils';
 
 interface Props {
     movement: {
@@ -53,7 +54,7 @@ export default function Show({ movement }: Props) {
                         </div>
                         <div>
                             <dt className="text-stone-500">Prix unitaire</dt>
-                            <dd>{movement.unit_price ? `${movement.unit_price} FCFA` : '-'}</dd>
+                            <dd>{movement.unit_price ? formatCurrency(movement.unit_price) : '-'}</dd>
                         </div>
                         <div>
                             <dt className="text-stone-500">Motif</dt>
