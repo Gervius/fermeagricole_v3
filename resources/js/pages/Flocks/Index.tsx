@@ -754,7 +754,7 @@ export default function FlockManagement({flocks, buildings, filters, flash, reci
                                         required
                                     />
                                 </Field>
-                                <Field label="Prix de vente (€) *">
+                                <Field label="Prix de vente (FCFA) *">
                                     <input
                                         type="number"
                                         step="0.01"
