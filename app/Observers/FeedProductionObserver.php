@@ -19,6 +19,14 @@ class FeedProductionObserver
         }
     }
 
+    public function created(FeedProduction $production)
+    {
+        // Si elle est créée directement approuvée
+        if ($production->status === 'approved') {
+            $this->applyProduction($production);
+        }
+    }
+
     protected function applyProduction(FeedProduction $production)
     {
         $recipe = $production->recipe;
@@ -57,21 +65,25 @@ class FeedProductionObserver
                 'default_unit_id' => $recipe->unit_id,
                 'current_stock' => 0,
                 'pmp' => 0,
+                'low_stock_threshold' => 0,
                 'is_active' => true,
             ]
         );
+
+        // Calcul du prix unitaire (PMP) de l'aliment produit
+        $feedUnitPrice = $production->quantity_produced > 0 ? $totalCost / $production->quantity_produced : 0;
 
         // Créer le mouvement d'entrée pour l'aliment produit
         StockMouvement::create([
             'ingredient_id' => $feedIngredient->id,
             'type' => 'in',
-            'quantity' => $feedProduction->quantity_produced,
-            'unit_id' => $feedProduction->unit_id,
+            'quantity' => $production->quantity_produced,
+            'unit_id' => $production->unit_id,
             'unit_price' => $feedUnitPrice,
             'reason' => "Production aliment: {$recipe->name}",
             'status' => 'approved',
-            'created_by' => $feedProduction->approved_by ?? auth()->id(),
-            'approved_by' => $feedProduction->approved_by,
+            'created_by' => $production->approved_by ?? auth()->id(),
+            'approved_by' => $production->approved_by,
             'approved_at' => now(),
         ]);
 
