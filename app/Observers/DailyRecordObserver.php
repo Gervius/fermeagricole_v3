@@ -37,8 +37,7 @@ class DailyRecordObserver
                         'quantity' => $record->feed_consumed,
                         'unit_id' => $feedIngredient->default_unit_id,
                         'unit_price' => $feedIngredient->pmp, // Use PMP of the ingredient
-                        'reason' => "Consommation du lot: {$record->flock->name}",
-                        'reference' => 'RECORD-' . $record->id,
+                        'reason' => "Consommation du lot: {$record->flock->name} (RECORD-{$record->id})",
                         'status' => 'approved',
                         'created_by' => $record->approved_by,
                         'approved_by' => $record->approved_by,
