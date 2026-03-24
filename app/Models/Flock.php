@@ -7,8 +7,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use App\Observers\FlockObserver;
 
-
+#[ObservedBy([FlockObserver::class])]
 class Flock extends Model
 {
     use SoftDeletes;
@@ -16,6 +18,8 @@ class Flock extends Model
     protected $fillable = [
         'name',
         'building_id',
+        'supplier_id',
+        'invoice_id',
         'arrival_date',
         'initial_quantity',
         'purchase_cost',
@@ -41,6 +45,16 @@ class Flock extends Model
     public function building(): BelongsTo
     {
         return $this->belongsTo(Building::class);
+    }
+
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Partner::class, 'supplier_id');
+    }
+
+    public function purchaseInvoice(): BelongsTo
+    {
+        return $this->belongsTo(Invoice::class, 'invoice_id');
     }
 
     public function dailyRecords(): HasMany
