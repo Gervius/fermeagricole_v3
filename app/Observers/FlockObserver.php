@@ -37,7 +37,7 @@ class FlockObserver
             'type' => 'purchase',
             'partner_id' => $flock->supplier_id,
             'date' => $flock->arrival_date,
-            'due_date' => $flock->arrival_date->addDays(30), // Par défaut 30 jours
+            'due_date' => $flock->arrival_date->copy()->addDays(30), // Par défaut 30 jours
             'subtotal' => $flock->purchase_cost,
             'tax_rate' => 0,
             'tax_amount' => 0,
