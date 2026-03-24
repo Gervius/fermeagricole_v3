@@ -211,6 +211,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         'index'   => 'journalVouchersIndex',
         'show'  => 'journalVoucherShow',])->parameters(['journal-vouchers' => 'journalVoucher']);
     
+    Route::resource('accounting-rules', \App\Http\Controllers\AccountingRuleController::class)->names([
+        'index' => 'accounting-rules.index',
+        'create' => 'accounting-rules.create',
+        'store' => 'accounting-rules.store',
+        'edit' => 'accounting-rules.edit',
+        'update' => 'accounting-rules.update',
+        'destroy' => 'accounting-rules.destroy',
+    ]);
+
     Route::resource('partners', PartnerController::class)
         ->only(['index', 'store', 'update', 'destroy'])
         ->names([
